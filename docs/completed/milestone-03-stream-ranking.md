@@ -1,9 +1,9 @@
 # Milestone 3: Single stream, ranking, and filters
 
-**Status:** planned
-**Index:** [WORK_PLAN.md](WORK_PLAN.md)
+**Status:** completed
+**Index:** [WORK_PLAN.md](../planned/WORK_PLAN.md)
 **Depends on:** [Milestone 2](../completed/milestone-02-signed-events.md)
-**Blocks:** [Milestone 4](milestone-04-ai-tagging.md), [Milestone 5](milestone-05-voluntary-files.md), and [Milestone 7](milestone-07-learned-ranking.md)
+**Blocks:** [Milestone 4](../planned/milestone-04-ai-tagging.md), [Milestone 5](../planned/milestone-05-voluntary-files.md), and [Milestone 7](../planned/milestone-07-learned-ranking.md)
 
 ## Outcome
 

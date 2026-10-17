@@ -38,7 +38,7 @@ The original list allowed milestones 4 and 5 to overlap after milestone 2. That 
 | 0 | [Foundation and tooling](../completed/milestone-00-foundation.md) | completed | none |
 | 1 | [Identity and invites](../completed/milestone-01-identity-invites.md) | completed | 0 |
 | 2 | [Signed events and local store](../completed/milestone-02-signed-events.md) | completed | 1 |
-| 3 | [Single stream, ranking, filters](milestone-03-stream-ranking.md) | planned | 2 |
+| 3 | [Single stream, ranking, filters](../completed/milestone-03-stream-ranking.md) | completed | 2 |
 | 4 | [Human and AI tagging](milestone-04-ai-tagging.md) | planned | 3 |
 | 5 | [Voluntary file sharing](milestone-05-voluntary-files.md) | planned | 2, 3 |
 | 6 | [Hybrid transport and hub skeleton](milestone-06-hybrid-transport.md) | planned | 2, 5 |

@@ -48,6 +48,7 @@ export interface ReadableMessage {
   readonly authorPublicKey?: string;
   readonly createdAt?: string;
   readonly origin?: "human";
+  readonly parentId?: string | null;
 }
 
 interface Wrap {
@@ -176,6 +177,7 @@ export async function readMessage(
     authorPublicKey: opened.authorPublicKey,
     createdAt: opened.createdAt,
     origin: "human",
+    parentId: opened.parentId,
   };
 }
 
@@ -184,8 +186,8 @@ export async function listMessages(
   readerPrivateKey: Uint8Array,
   clubId: string,
 ): Promise<ReadableMessage[]> {
-  const rows = await db.select<{ id: string }>(
-    "SELECT id FROM events WHERE club_id = ? ORDER BY created_at, id",
+  const rows = await db.select<{ id: string; parent_id: string | null }>(
+    "SELECT id, parent_id FROM events WHERE club_id = ? ORDER BY created_at, id",
     [clubId],
   );
   const messages: ReadableMessage[] = [];
@@ -194,7 +196,7 @@ export async function listMessages(
       messages.push(await readMessage(db, readerPrivateKey, row.id));
     } catch (error) {
       if (error instanceof MessageError) {
-        messages.push({ id: row.id, verified: false });
+        messages.push({ id: row.id, verified: false, parentId: row.parent_id });
         continue;
       }
       throw error;
@@ -241,7 +243,7 @@ async function openEvent(
   db: SqlExecutor,
   readerPrivateKey: Uint8Array,
   eventId: string,
-): Promise<{ body: string; authorPublicKey: string; createdAt: string }> {
+): Promise<{ body: string; authorPublicKey: string; createdAt: string; parentId: string | null }> {
   let readerPublic = "";
   try {
     readerPublic = publicKeyOf(readerPrivateKey);
@@ -296,7 +298,7 @@ async function openEvent(
 function verifiedPlaintext(
   packedBytes: Uint8Array,
   event: StoredEvent,
-): { body: string; authorPublicKey: string; createdAt: string } {
+): { body: string; authorPublicKey: string; createdAt: string; parentId: string | null } {
   let packed: unknown;
   try {
     packed = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(packedBytes)) as unknown;
@@ -330,6 +332,7 @@ function verifiedPlaintext(
     body: claims.body,
     authorPublicKey: event.author_public_key,
     createdAt: event.created_at,
+    parentId: event.parent_id,
   };
 }
 

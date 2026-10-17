@@ -2,7 +2,7 @@
 
 **Status:** planned
 **Index:** [WORK_PLAN.md](WORK_PLAN.md)
-**Depends on:** [Milestone 3](milestone-03-stream-ranking.md)
+**Depends on:** [Milestone 3](../completed/milestone-03-stream-ranking.md)
 **Blocks:** [Milestone 8](milestone-08-mcp-cli.md)
 
 ## Outcome

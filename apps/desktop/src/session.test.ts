@@ -163,4 +163,34 @@ describe("local profiles", () => {
       expect(readFileSync(path).includes(Buffer.from("hello club"))).toBe(false);
     }
   });
+
+  it("keeps a reply, bookmark, and read mark on the profile that set them", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "shakespeare-session-stream-"));
+    directories.push(dir);
+    const { host, close } = createHost(dir);
+    try {
+      const session = createSession(host);
+      const alice = await session.createProfile(NOW);
+      const clubId = await session.createClub("Alpha", NOW);
+      await session.sendMessage(clubId, "hello club", NOW);
+      const first = (await session.messages(clubId))[0];
+      if (!first) throw new Error("missing message");
+      await session.sendMessage(clubId, "a reply", LATER, first.id);
+      await session.bookmark(first.id, LATER);
+      await session.markRead(first.id, LATER);
+      await session.saveTheme("Focus", ["runway"]);
+      const messages = await session.messages(clubId);
+      expect(messages[1]?.parentId).toBe(first.id);
+      expect(messages[1]?.body).toBe("a reply");
+      expect(await session.bookmarkIds()).toEqual([first.id]);
+      expect(await session.readIds()).toEqual([first.id]);
+      expect(await session.themes()).toEqual([{ id: expect.any(String), name: "Focus", terms: ["runway"] }]);
+      await session.openProfile(alice, LATER);
+      expect(await session.bookmarkIds()).toEqual([first.id]);
+      expect(await session.readIds()).toEqual([first.id]);
+      expect((await session.themes()).map((theme) => theme.name)).toEqual(["Focus"]);
+    } finally {
+      close();
+    }
+  });
 });

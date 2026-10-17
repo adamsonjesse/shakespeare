@@ -10,7 +10,9 @@ create a club, copy an invite link, and show a QR code for the same link.
 Another profile on the same device can accept the invite and show up as a
 member. Two members of a club can send a short text message. The body is
 encrypted in that profile's SQLite file and still decrypts after a restart.
-Files are a later milestone.
+The club opens as one stream: local themes filter it, unread items can be
+sorted into a catch-up list, and a reply sits one level under its parent.
+Read marks and bookmarks stay on that profile. Files are a later milestone.
 
 ## Prerequisites
 

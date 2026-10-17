@@ -1,4 +1,5 @@
 import {
+  addBookmark,
   applyAcceptance,
   commitInvitee,
   createClub as insertClub,
@@ -8,12 +9,17 @@ import {
   inviteLink,
   listClubs as selectClubs,
   listMembers as selectMembers,
+  listBookmarkIds,
   listMessages as selectMessageList,
+  listReadIds,
+  listThemes,
   loadIdentity,
+  markRead as storeRead,
   MembershipError,
   migrate,
   MIGRATIONS,
   postMessage,
+  saveTheme as storeTheme,
   prepareAcceptance,
   readInvite,
   serializeAcceptance,
@@ -23,6 +29,7 @@ import {
   type Member,
   type ReadableMessage,
   type SqlExecutor,
+  type Theme,
 } from "@shakespeare/core";
 
 /** One active SQLite connection. Opening a profile replaces the previous one. */
@@ -43,8 +50,14 @@ export interface Session {
   listMembers(clubId: string): Promise<Member[]>;
   issueInvite(input: { clubId: string; expiresAt: string; oneTime: boolean }): Promise<string>;
   acceptInvite(pasted: string, now: string): Promise<{ deliveredLocally: boolean; clubId: string }>;
-  sendMessage(clubId: string, body: string, now: string): Promise<void>;
+  sendMessage(clubId: string, body: string, now: string, parentId?: string | null): Promise<void>;
   messages(clubId: string): Promise<ReadableMessage[]>;
+  markRead(eventId: string, now: string): Promise<void>;
+  bookmark(eventId: string, now: string): Promise<void>;
+  readIds(): Promise<string[]>;
+  bookmarkIds(): Promise<string[]>;
+  saveTheme(name: string, terms: readonly string[]): Promise<void>;
+  themes(): Promise<Theme[]>;
 }
 
 /**
@@ -160,13 +173,19 @@ export function createSession(host: ProfileHost): Session {
       return { deliveredLocally, clubId: acceptance.clubId };
     },
 
-    async sendMessage(clubId: string, body: string, now: string): Promise<void> {
+    async sendMessage(
+      clubId: string,
+      body: string,
+      now: string,
+      parentId: string | null = null,
+    ): Promise<void> {
       const active = requireOpen();
       const posted = await postMessage(active.database, active.identity, {
         clubId,
         body,
         now,
         origin: "human",
+        parentId,
       });
       const members = await selectMembers(active.database, clubId);
       const profiles = await host.listProfiles();
@@ -188,6 +207,30 @@ export function createSession(host: ProfileHost): Session {
     async messages(clubId: string): Promise<ReadableMessage[]> {
       const active = requireOpen();
       return selectMessageList(active.database, active.identity.privateKey, clubId);
+    },
+
+    async markRead(eventId: string, now: string): Promise<void> {
+      await storeRead(requireOpen().database, eventId, now);
+    },
+
+    async bookmark(eventId: string, now: string): Promise<void> {
+      await addBookmark(requireOpen().database, eventId, now);
+    },
+
+    async readIds(): Promise<string[]> {
+      return listReadIds(requireOpen().database);
+    },
+
+    async bookmarkIds(): Promise<string[]> {
+      return listBookmarkIds(requireOpen().database);
+    },
+
+    async saveTheme(name: string, terms: readonly string[]): Promise<void> {
+      await storeTheme(requireOpen().database, { id: crypto.randomUUID(), name, terms });
+    },
+
+    async themes(): Promise<Theme[]> {
+      return listThemes(requireOpen().database);
     },
   };
 }

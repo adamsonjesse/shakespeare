@@ -270,10 +270,10 @@ milestone the user has asked for.
 
 ### Next milestone
 
-Milestone 3, Single stream, ranking, and filters, is the next eligible milestone.
-Its plan is [docs/planned/milestone-03-stream-ranking.md](docs/planned/milestone-03-stream-ranking.md).
+Milestone 4, Human and AI tagging, is the next eligible milestone.
+Its plan is [docs/planned/milestone-04-ai-tagging.md](docs/planned/milestone-04-ai-tagging.md).
 It has not started. The order is in `docs/planned/WORK_PLAN.md`.
-Do not start Milestone 3, or any later milestone, unless the user asks.
+Do not start Milestone 4, or any later milestone, unless the user asks.
 
 ## Engineering rules
 

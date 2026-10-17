@@ -30,3 +30,23 @@ export {
   TestHub,
 } from "./events.ts";
 export type { PostedMessage, ReadableMessage } from "./events.ts";
+export {
+  applyTheme,
+  catchUpItems,
+  rankItems,
+  RECENCY_HALF_LIFE_MS,
+  textMatchesTheme,
+  threadMessages,
+} from "./rank.ts";
+export type { RankInput, ThreadItem, ThreadRow } from "./rank.ts";
+export {
+  addBookmark,
+  listBookmarkIds,
+  listReadIds,
+  listThemes,
+  listUnreadIds,
+  markRead,
+  saveTheme,
+  StreamError,
+} from "./stream.ts";
+export type { Theme } from "./stream.ts";

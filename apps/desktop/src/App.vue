@@ -1,9 +1,19 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import QRCode from "qrcode";
 import { createSession } from "./session.ts";
 import { createTauriHost } from "./storage.ts";
-import type { Club, Member, ReadableMessage } from "@shakespeare/core";
+import {
+  applyTheme,
+  catchUpItems,
+  RECENCY_HALF_LIFE_MS,
+  textMatchesTheme,
+  threadMessages,
+  type Club,
+  type Member,
+  type ReadableMessage,
+  type Theme,
+} from "@shakespeare/core";
 
 const session = createSession(createTauriHost());
 const profiles = ref<string[]>([]);
@@ -13,6 +23,14 @@ const selectedClubId = ref("");
 const members = ref<Member[]>([]);
 const messages = ref<ReadableMessage[]>([]);
 const messageBody = ref("");
+const themes = ref<Theme[]>([]);
+const activeThemeId = ref("");
+const themeName = ref("");
+const themeTerms = ref("");
+const readIds = ref<string[]>([]);
+const bookmarkIds = ref<string[]>([]);
+const catchUp = ref(false);
+const replyParentId = ref("");
 const clubName = ref("");
 const inviteHours = ref(24);
 const oneTime = ref(false);
@@ -66,12 +84,47 @@ async function drawQr(link: string): Promise<void> {
   }
 }
 
+const streamRows = computed(() => {
+  const theme = themes.value.find((item) => item.id === activeThemeId.value);
+  const terms = theme ? theme.terms : null;
+  const filtered = applyTheme(messages.value, terms);
+  const read = new Set(readIds.value);
+  const bookmarks = new Set(bookmarkIds.value);
+  const items = filtered.map((message) => ({
+    message,
+    id: message.id,
+    parentId: message.parentId ?? null,
+    createdAt: message.createdAt ?? "",
+    matchesTheme: terms !== null && message.body !== undefined && textMatchesTheme(message.body, terms),
+    read: read.has(message.id),
+    bookmarked: bookmarks.has(message.id),
+  }));
+  const now = new Date().toISOString();
+  if (catchUp.value) {
+    return catchUpItems(items, now, RECENCY_HALF_LIFE_MS).map((item) => ({
+      item,
+      indent: item.parentId === null ? 0 as const : 1 as const,
+    }));
+  }
+  return threadMessages(items, now, RECENCY_HALF_LIFE_MS);
+});
+
 async function refreshClubs(): Promise<void> {
   clubs.value = await session.listClubs();
+  if (currentPublicKey.value) {
+    themes.value = await session.themes();
+    readIds.value = await session.readIds();
+    bookmarkIds.value = await session.bookmarkIds();
+  } else {
+    themes.value = [];
+    readIds.value = [];
+    bookmarkIds.value = [];
+  }
   if (!clubs.value.some((club) => club.id === selectedClubId.value)) {
     selectedClubId.value = "";
     members.value = [];
     messages.value = [];
+    replyParentId.value = "";
     return;
   }
   members.value = await session.listMembers(selectedClubId.value);
@@ -101,6 +154,9 @@ function createProfile(): void {
     inviteLink.value = "";
     members.value = [];
     messages.value = [];
+    activeThemeId.value = "";
+    replyParentId.value = "";
+    catchUp.value = false;
     await refreshClubs();
     status.value = "Profile ready.";
   });
@@ -113,6 +169,9 @@ function useProfile(publicKey: string): void {
     currentPublicKey.value = publicKey;
     inviteLink.value = "";
     acceptText.value = "";
+    activeThemeId.value = "";
+    replyParentId.value = "";
+    catchUp.value = false;
     await refreshClubs();
     status.value = "Profile open.";
   });
@@ -134,6 +193,7 @@ function selectClub(clubId: string): void {
   void run(async () => {
     selectedClubId.value = clubId;
     inviteLink.value = "";
+    replyParentId.value = "";
     members.value = await session.listMembers(clubId);
     messages.value = await session.messages(clubId);
   });
@@ -142,10 +202,38 @@ function selectClub(clubId: string): void {
 function sendMessage(): void {
   void run(async () => {
     const now = new Date().toISOString();
-    await session.sendMessage(selectedClubId.value, messageBody.value, now);
+    await session.sendMessage(selectedClubId.value, messageBody.value, now, replyParentId.value || null);
     messageBody.value = "";
-    messages.value = await session.messages(selectedClubId.value);
+    replyParentId.value = "";
+    await refreshClubs();
     status.value = "Message sent.";
+  });
+}
+
+function markMessageRead(eventId: string): void {
+  void run(async () => {
+    await session.markRead(eventId, new Date().toISOString());
+    await refreshClubs();
+    status.value = "Marked read.";
+  });
+}
+
+function bookmarkMessage(eventId: string): void {
+  void run(async () => {
+    await session.bookmark(eventId, new Date().toISOString());
+    await refreshClubs();
+    status.value = "Bookmark saved.";
+  });
+}
+
+function saveTheme(): void {
+  void run(async () => {
+    const terms = themeTerms.value.split(",").map((term) => term.trim()).filter((term) => term.length > 0);
+    await session.saveTheme(themeName.value, terms);
+    themeName.value = "";
+    themeTerms.value = "";
+    await refreshClubs();
+    status.value = "Theme saved.";
   });
 }
 
@@ -313,19 +401,154 @@ function acceptInvite(): void {
       <h2 class="text-lg font-semibold">
         Messages
       </h2>
+      <div class="flex flex-wrap gap-2">
+        <button
+          type="button"
+          data-testid="show-stream"
+          class="rounded border border-stone-300 px-3 py-2"
+          :disabled="busy"
+          @click="catchUp = false"
+        >
+          Stream
+        </button>
+        <button
+          type="button"
+          data-testid="show-catch-up"
+          class="rounded border border-stone-300 px-3 py-2"
+          :disabled="busy"
+          @click="catchUp = true"
+        >
+          Catch-up
+        </button>
+      </div>
+      <div class="flex flex-col gap-2">
+        <label
+          class="flex flex-col gap-1 text-sm"
+          for="theme-name"
+        >
+          Theme name
+          <input
+            id="theme-name"
+            v-model="themeName"
+            data-testid="theme-name"
+            class="rounded border border-stone-300 px-3 py-2"
+            type="text"
+          >
+        </label>
+        <label
+          class="flex flex-col gap-1 text-sm"
+          for="theme-terms"
+        >
+          Theme terms
+          <input
+            id="theme-terms"
+            v-model="themeTerms"
+            data-testid="theme-terms"
+            class="rounded border border-stone-300 px-3 py-2"
+            type="text"
+          >
+        </label>
+        <button
+          type="button"
+          data-testid="save-theme"
+          class="w-fit rounded bg-stone-900 px-3 py-2 text-white disabled:opacity-50"
+          :disabled="busy"
+          @click="saveTheme"
+        >
+          Save theme
+        </button>
+        <ul class="flex flex-wrap gap-2">
+          <li
+            v-for="theme in themes"
+            :key="theme.id"
+          >
+            <button
+              type="button"
+              data-testid="theme-button"
+              class="rounded border border-stone-300 px-3 py-2"
+              :data-theme-id="theme.id"
+              :disabled="busy"
+              @click="activeThemeId = theme.id"
+            >
+              {{ theme.name }}
+            </button>
+          </li>
+        </ul>
+        <button
+          type="button"
+          data-testid="clear-theme"
+          class="w-fit rounded border border-stone-300 px-3 py-2"
+          :disabled="busy"
+          @click="activeThemeId = ''"
+        >
+          Show all
+        </button>
+      </div>
       <ul
         data-testid="message-list"
         class="flex flex-col gap-2"
+        :data-mode="catchUp ? 'catch-up' : 'stream'"
       >
         <li
-          v-for="message in messages"
-          :key="message.id"
+          v-for="row in streamRows"
+          :key="row.item.id"
           data-testid="message-row"
+          class="flex flex-col gap-2"
+          :class="row.indent === 1 ? 'pl-6' : ''"
+          :data-indent="row.indent"
+          :data-read="row.item.read ? 'true' : 'false'"
+          :data-bookmarked="row.item.bookmarked ? 'true' : 'false'"
         >
-          <span v-if="message.verified">{{ message.body }}</span>
+          <span v-if="row.item.message.verified">{{ row.item.message.body }}</span>
           <span v-else>A message could not be verified.</span>
+          <div class="flex flex-wrap gap-2">
+            <button
+              type="button"
+              data-testid="mark-read"
+              class="rounded border border-stone-300 px-3 py-2"
+              :disabled="busy"
+              @click="markMessageRead(row.item.id)"
+            >
+              Mark read
+            </button>
+            <button
+              type="button"
+              data-testid="bookmark"
+              class="rounded border border-stone-300 px-3 py-2"
+              :disabled="busy"
+              @click="bookmarkMessage(row.item.id)"
+            >
+              Bookmark
+            </button>
+            <button
+              type="button"
+              data-testid="reply"
+              class="rounded border border-stone-300 px-3 py-2"
+              :disabled="busy"
+              @click="replyParentId = row.item.id"
+            >
+              Reply
+            </button>
+          </div>
         </li>
       </ul>
+      <p
+        v-if="replyParentId"
+        data-testid="replying"
+        class="text-sm text-stone-600"
+      >
+        Replying
+      </p>
+      <button
+        v-if="replyParentId"
+        type="button"
+        data-testid="cancel-reply"
+        class="w-fit rounded border border-stone-300 px-3 py-2"
+        :disabled="busy"
+        @click="replyParentId = ''"
+      >
+        Cancel reply
+      </button>
       <label
         class="flex flex-col gap-1 text-sm"
         for="message-body"

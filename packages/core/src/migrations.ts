@@ -67,4 +67,24 @@ export const MIGRATIONS: readonly Migration[] = [
       )`,
     ],
   },
+  {
+    version: 4,
+    statements: [
+      `CREATE TABLE read_state (
+        event_id TEXT PRIMARY KEY NOT NULL,
+        read_at TEXT NOT NULL,
+        FOREIGN KEY (event_id) REFERENCES events (id)
+      )`,
+      `CREATE TABLE bookmarks (
+        event_id TEXT PRIMARY KEY NOT NULL,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (event_id) REFERENCES events (id)
+      )`,
+      `CREATE TABLE themes (
+        id TEXT PRIMARY KEY NOT NULL,
+        name TEXT NOT NULL,
+        terms TEXT NOT NULL
+      )`,
+    ],
+  },
 ];
