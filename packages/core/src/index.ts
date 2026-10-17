@@ -59,6 +59,8 @@ export {
 } from "./stream.ts";
 export type { Theme } from "./stream.ts";
 export { postMessageTool, runPostMessageCli } from "./post-tool.ts";
+export { callTool, toolCatalog, toolFailureMessage, ToolError } from "./tools.ts";
+export type { ToolContext, ToolSpec } from "./tools.ts";
 export {
   assertSharePath,
   buildManifest,

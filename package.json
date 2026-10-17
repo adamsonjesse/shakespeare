@@ -14,6 +14,8 @@
     "build:web": "pnpm --filter @shakespeare/desktop build:web",
     "build:desktop": "pnpm --filter @shakespeare/desktop build",
     "hub": "node --experimental-strip-types packages/core/src/hub-cli.ts",
+    "tools": "node --experimental-strip-types packages/core/src/tool-cli.ts",
+    "example:tools": "node --experimental-strip-types packages/core/src/example-club-tools.ts",
     "cap:sync": "pnpm build:web && pnpm --filter @shakespeare/mobile exec cap sync"
   },
   "devDependencies": {

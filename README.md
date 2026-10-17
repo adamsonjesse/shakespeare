@@ -24,7 +24,13 @@ explicitly seeds. It does not read message bodies. Bookmarking, replying, or
 reading a message for at least two seconds raises the weight of themes that
 match it, and catch-up uses those weights. Publishing weights to the hub is
 off unless the member opts in, and that publish contains theme ids and
-numbers only.
+numbers only. A loopback tool server and a matching CLI can post, read,
+reply, mark read, bookmark, save themes, list members, and request one
+download. Posts and replies are tagged AI. Neither one exports a private
+key. `pnpm example:tools` runs that path on a temporary profile with no
+provider key. `pnpm tools -- <database> <tool> <json>` calls the same tools.
+Set `SHAKESPEARE_PRIVATE_KEY` to the profile's hex private key. The command
+does not print it.
 
 ## Prerequisites
 
@@ -51,6 +57,8 @@ Run these from the repository root after `pnpm install`.
 | `pnpm cap:sync` | Rebuild the web app and update the Capacitor Android project |
 | `pnpm build:desktop` | Build the desktop bundle |
 | `pnpm hub -- <directory> <port>` | Run the local store-and-forward hub |
+| `pnpm tools -- <database> <tool> <json>` | Call one local club tool |
+| `pnpm example:tools` | Post, read, and download against a temporary profile |
 
 ## Layout
 

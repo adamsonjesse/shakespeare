@@ -1,9 +1,9 @@
 # Milestone 8: MCP and CLI parity
 
-**Status:** planned
-**Index:** [WORK_PLAN.md](WORK_PLAN.md)
-**Depends on:** [Milestone 4](../completed/milestone-04-ai-tagging.md), [Milestone 5](../completed/milestone-05-voluntary-files.md), and [Milestone 7](../completed/milestone-07-learned-ranking.md)
-**Blocks:** [Milestone 9](milestone-09-mobile.md) and [Milestone 10](milestone-10-security-docs.md)
+**Status:** completed
+**Index:** [WORK_PLAN.md](../planned/WORK_PLAN.md)
+**Depends on:** [Milestone 4](milestone-04-ai-tagging.md), [Milestone 5](milestone-05-voluntary-files.md), and [Milestone 7](milestone-07-learned-ranking.md)
+**Blocks:** [Milestone 9](../planned/milestone-09-mobile.md) and [Milestone 10](../planned/milestone-10-security-docs.md)
 
 ## Outcome
 
@@ -82,3 +82,8 @@ This is a same-agent review, not an independent review.
 - The server binds to loopback. Decrypted text is returned only to that local caller.
 - Downloads start only in `request_download`.
 - The example script uses a temporary profile and no provider secrets.
+- No Model Context Protocol SDK package was added. The loopback server speaks `initialize`, `tools/list`, and `tools/call`. The CLI calls the same functions.
+
+## Result
+
+`post_message`, `reply`, `read_stream`, `mark_read`, `bookmark`, `save_theme`, `list_themes`, `request_download`, and `list_members` share one core path. Posts and replies are signed `ai` even when the caller sends `human`. The published tool schema has no origin field and no key export. `read_stream` can hide one origin and filter by a saved theme. It returns decrypted text on the loopback caller and does not write `download_requests`. `request_download` is the only tool that fetches file bytes. `audit_log` stores the time, tool name, public key, event ids, and a result code. It has no body column. The server listens on `127.0.0.1` only. `pnpm example:tools` posts, reads the AI message back, and downloads one file on a temporary profile. A bookmark, and a read that lasts at least two seconds, raise matching theme weights the same way the desktop session does.

@@ -128,4 +128,17 @@ export const MIGRATIONS: readonly Migration[] = [
       )`,
     ],
   },
+  {
+    version: 8,
+    statements: [
+      `CREATE TABLE audit_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        time TEXT NOT NULL,
+        tool TEXT NOT NULL,
+        public_key TEXT NOT NULL,
+        event_ids TEXT NOT NULL,
+        result_code TEXT NOT NULL
+      )`,
+    ],
+  },
 ];

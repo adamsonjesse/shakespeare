@@ -3,7 +3,7 @@
 **Status:** completed
 **Index:** [WORK_PLAN.md](../planned/WORK_PLAN.md)
 **Depends on:** [Milestone 3](milestone-03-stream-ranking.md) and [Milestone 6](milestone-06-hybrid-transport.md)
-**Blocks:** [Milestone 8](../planned/milestone-08-mcp-cli.md)
+**Blocks:** [Milestone 8](milestone-08-mcp-cli.md)
 
 ## Outcome
 

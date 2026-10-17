@@ -44,7 +44,7 @@ describe("migrate", () => {
     const { executor, close } = await temporaryDatabase();
     try {
       const version = await migrate(executor, MIGRATIONS, { now: NOW });
-      expect(version).toBe(7);
+      expect(version).toBe(8);
       const rows = await executor.select<{ version: number; applied_at: string }>(
         "SELECT version, applied_at FROM schema_migrations ORDER BY version",
       );
@@ -56,6 +56,7 @@ describe("migrate", () => {
         { version: 5, applied_at: NOW },
         { version: 6, applied_at: NOW },
         { version: 7, applied_at: NOW },
+        { version: 8, applied_at: NOW },
       ]);
     } finally {
       close();
@@ -78,6 +79,7 @@ describe("migrate", () => {
         { version: 5 },
         { version: 6 },
         { version: 7 },
+        { version: 8 },
       ]);
     } finally {
       close();
@@ -153,7 +155,7 @@ describe("migrate", () => {
     try {
       const upgraded = openExecutor(copied);
       const version = await migrate(upgraded, MIGRATIONS, { now: "2026-10-18T00:00:00.000Z" });
-      expect(version).toBe(7);
+      expect(version).toBe(8);
       const rows = await upgraded.select<{ version: number; applied_at: string }>(
         "SELECT version, applied_at FROM schema_migrations ORDER BY version",
       );
@@ -165,11 +167,13 @@ describe("migrate", () => {
         { version: 5, applied_at: "2026-10-18T00:00:00.000Z" },
         { version: 6, applied_at: "2026-10-18T00:00:00.000Z" },
         { version: 7, applied_at: "2026-10-18T00:00:00.000Z" },
+        { version: 8, applied_at: "2026-10-18T00:00:00.000Z" },
       ]);
       const tables = await upgraded.select<{ name: string }>(
         "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name",
       );
       expect(tables.map((table) => table.name)).toEqual([
+        "audit_log",
         "blob_index",
         "bookmarks",
         "club_key_wraps",
@@ -208,7 +212,7 @@ describe("migrate", () => {
     try {
       const upgraded = openExecutor(copied);
       const version = await migrate(upgraded, MIGRATIONS, { now: "2026-10-18T00:00:00.000Z" });
-      expect(version).toBe(7);
+      expect(version).toBe(8);
       const rows = await upgraded.select<{ version: number; applied_at: string }>(
         "SELECT version, applied_at FROM schema_migrations ORDER BY version",
       );
@@ -220,11 +224,13 @@ describe("migrate", () => {
         { version: 5, applied_at: "2026-10-18T00:00:00.000Z" },
         { version: 6, applied_at: "2026-10-18T00:00:00.000Z" },
         { version: 7, applied_at: "2026-10-18T00:00:00.000Z" },
+        { version: 8, applied_at: "2026-10-18T00:00:00.000Z" },
       ]);
       const tables = await upgraded.select<{ name: string }>(
         "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name",
       );
       expect(tables.map((table) => table.name)).toEqual([
+        "audit_log",
         "blob_index",
         "bookmarks",
         "club_key_wraps",
@@ -263,7 +269,7 @@ describe("migrate", () => {
     try {
       const upgraded = openExecutor(copied);
       const version = await migrate(upgraded, MIGRATIONS, { now: "2026-10-18T00:00:00.000Z" });
-      expect(version).toBe(7);
+      expect(version).toBe(8);
       const rows = await upgraded.select<{ version: number; applied_at: string }>(
         "SELECT version, applied_at FROM schema_migrations ORDER BY version",
       );
@@ -275,11 +281,13 @@ describe("migrate", () => {
         { version: 5, applied_at: "2026-10-18T00:00:00.000Z" },
         { version: 6, applied_at: "2026-10-18T00:00:00.000Z" },
         { version: 7, applied_at: "2026-10-18T00:00:00.000Z" },
+        { version: 8, applied_at: "2026-10-18T00:00:00.000Z" },
       ]);
       const tables = await upgraded.select<{ name: string }>(
         "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name",
       );
       expect(tables.map((table) => table.name)).toEqual([
+        "audit_log",
         "blob_index",
         "bookmarks",
         "club_key_wraps",
