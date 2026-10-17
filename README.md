@@ -12,7 +12,9 @@ member. Two members of a club can send a short text message. The body is
 encrypted in that profile's SQLite file and still decrypts after a restart.
 The club opens as one stream: local themes filter it, unread items can be
 sorted into a catch-up list, and a reply sits one level under its parent.
-Read marks and bookmarks stay on that profile. Files are a later milestone.
+Read marks and bookmarks stay on that profile. A composed message is tagged
+Human. A local post tool tags the same identity as AI, and the stream can
+hide either tag. Files are a later milestone.
 
 ## Prerequisites
 

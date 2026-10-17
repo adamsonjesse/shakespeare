@@ -270,10 +270,10 @@ milestone the user has asked for.
 
 ### Next milestone
 
-Milestone 4, Human and AI tagging, is the next eligible milestone.
-Its plan is [docs/planned/milestone-04-ai-tagging.md](docs/planned/milestone-04-ai-tagging.md).
+Milestone 5, Voluntary file sharing, is the next eligible milestone.
+Its plan is [docs/planned/milestone-05-voluntary-files.md](docs/planned/milestone-05-voluntary-files.md).
 It has not started. The order is in `docs/planned/WORK_PLAN.md`.
-Do not start Milestone 4, or any later milestone, unless the user asks.
+Do not start Milestone 5, or any later milestone, unless the user asks.
 
 ## Engineering rules
 

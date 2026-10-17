@@ -88,7 +88,7 @@ describe("signed events", () => {
           clubId: "club-a",
           body: BODY,
           now: NOW,
-          origin: "ai",
+          origin: "bot",
         }),
       ).rejects.toMatchObject({ code: "origin" });
       expect(await aliceDb.executor.select("SELECT id FROM events")).toEqual([]);

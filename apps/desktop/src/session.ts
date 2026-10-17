@@ -19,6 +19,7 @@ import {
   migrate,
   MIGRATIONS,
   postMessage,
+  runPostMessageCli,
   saveTheme as storeTheme,
   prepareAcceptance,
   readInvite,
@@ -51,6 +52,7 @@ export interface Session {
   issueInvite(input: { clubId: string; expiresAt: string; oneTime: boolean }): Promise<string>;
   acceptInvite(pasted: string, now: string): Promise<{ deliveredLocally: boolean; clubId: string }>;
   sendMessage(clubId: string, body: string, now: string, parentId?: string | null): Promise<void>;
+  postToolMessage(clubId: string, body: string, now: string): Promise<void>;
   messages(clubId: string): Promise<ReadableMessage[]>;
   markRead(eventId: string, now: string): Promise<void>;
   bookmark(eventId: string, now: string): Promise<void>;
@@ -89,6 +91,23 @@ export function createSession(host: ProfileHost): Session {
   function requireOpen(): { identity: Identity; database: SqlExecutor } {
     if (!current || !database) throw new Error("No profile is open.");
     return { identity: current, database };
+  }
+
+  async function fanOut(sender: string, clubId: string, now: string, envelope: string): Promise<void> {
+    const active = requireOpen();
+    const members = await selectMembers(active.database, clubId);
+    const profiles = await host.listProfiles();
+    for (const member of members) {
+      if (member.publicKey === sender || !profiles.includes(member.publicKey)) continue;
+      try {
+        const other = await openDatabase(member.publicKey, now);
+        await importEnvelope(other, envelope);
+      } catch (error) {
+        database = await openDatabase(sender, now);
+        throw error;
+      }
+    }
+    database = await openDatabase(sender, now);
   }
 
   return {
@@ -187,21 +206,18 @@ export function createSession(host: ProfileHost): Session {
         origin: "human",
         parentId,
       });
-      const members = await selectMembers(active.database, clubId);
-      const profiles = await host.listProfiles();
-      for (const member of members) {
-        if (member.publicKey === active.identity.publicKey || !profiles.includes(member.publicKey)) {
-          continue;
-        }
-        try {
-          const other = await openDatabase(member.publicKey, now);
-          await importEnvelope(other, posted.envelope);
-        } catch (error) {
-          database = await openDatabase(active.identity.publicKey, now);
-          throw error;
-        }
-      }
-      database = await openDatabase(active.identity.publicKey, now);
+      await fanOut(active.identity.publicKey, clubId, now, posted.envelope);
+    },
+
+    async postToolMessage(clubId: string, body: string, now: string): Promise<void> {
+      const active = requireOpen();
+      const posted = await runPostMessageCli(active.database, active.identity, {
+        clubId,
+        body,
+        now,
+        origin: "human",
+      });
+      await fanOut(active.identity.publicKey, clubId, now, posted.envelope);
     },
 
     async messages(clubId: string): Promise<ReadableMessage[]> {

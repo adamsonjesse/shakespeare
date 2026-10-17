@@ -84,6 +84,14 @@ export function textMatchesTheme(body: string, terms: readonly string[]): boolea
   });
 }
 
+export function excludeOrigin<T extends { readonly verified: boolean; readonly origin?: "human" | "ai" }>(
+  messages: readonly T[],
+  origin: "human" | "ai" | null,
+): T[] {
+  if (origin === null) return [...messages];
+  return messages.filter((message) => message.verified && message.origin !== origin);
+}
+
 export function applyTheme<T extends { readonly verified: boolean; readonly body?: string }>(
   messages: readonly T[],
   terms: readonly string[] | null,

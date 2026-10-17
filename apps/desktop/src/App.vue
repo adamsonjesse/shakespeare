@@ -6,6 +6,7 @@ import { createTauriHost } from "./storage.ts";
 import {
   applyTheme,
   catchUpItems,
+  excludeOrigin,
   RECENCY_HALF_LIFE_MS,
   textMatchesTheme,
   threadMessages,
@@ -31,6 +32,7 @@ const readIds = ref<string[]>([]);
 const bookmarkIds = ref<string[]>([]);
 const catchUp = ref(false);
 const replyParentId = ref("");
+const hiddenOrigin = ref<"human" | "ai" | null>(null);
 const clubName = ref("");
 const inviteHours = ref(24);
 const oneTime = ref(false);
@@ -44,6 +46,24 @@ const busy = ref(false);
 onMounted(() => {
   void run(async () => {
     profiles.value = [...(await session.listProfiles())];
+  });
+});
+
+// Local tool bridge for post_message. It always signs origin ai. The composer
+// does not call it, and a caller-supplied origin on the event is ignored.
+globalThis.addEventListener("shakespeare-post-ai", (event) => {
+  const detail = "detail" in event ? event.detail : undefined;
+  const body =
+    typeof detail === "object" &&
+    detail !== null &&
+    "body" in detail &&
+    typeof detail.body === "string"
+      ? detail.body
+      : "";
+  void run(async () => {
+    await session.postToolMessage(selectedClubId.value, body, new Date().toISOString());
+    await refreshClubs();
+    status.value = "AI message posted.";
   });
 });
 
@@ -87,7 +107,7 @@ async function drawQr(link: string): Promise<void> {
 const streamRows = computed(() => {
   const theme = themes.value.find((item) => item.id === activeThemeId.value);
   const terms = theme ? theme.terms : null;
-  const filtered = applyTheme(messages.value, terms);
+  const filtered = excludeOrigin(applyTheme(messages.value, terms), hiddenOrigin.value);
   const read = new Set(readIds.value);
   const bookmarks = new Set(bookmarkIds.value);
   const items = filtered.map((message) => ({
@@ -157,6 +177,7 @@ function createProfile(): void {
     activeThemeId.value = "";
     replyParentId.value = "";
     catchUp.value = false;
+    hiddenOrigin.value = null;
     await refreshClubs();
     status.value = "Profile ready.";
   });
@@ -172,6 +193,7 @@ function useProfile(publicKey: string): void {
     activeThemeId.value = "";
     replyParentId.value = "";
     catchUp.value = false;
+    hiddenOrigin.value = null;
     await refreshClubs();
     status.value = "Profile open.";
   });
@@ -420,6 +442,33 @@ function acceptInvite(): void {
         >
           Catch-up
         </button>
+        <button
+          type="button"
+          data-testid="filter-all"
+          class="rounded border border-stone-300 px-3 py-2"
+          :disabled="busy"
+          @click="hiddenOrigin = null"
+        >
+          All
+        </button>
+        <button
+          type="button"
+          data-testid="filter-ai"
+          class="rounded border border-stone-300 px-3 py-2"
+          :disabled="busy"
+          @click="hiddenOrigin = 'ai'"
+        >
+          Hide AI
+        </button>
+        <button
+          type="button"
+          data-testid="filter-human"
+          class="rounded border border-stone-300 px-3 py-2"
+          :disabled="busy"
+          @click="hiddenOrigin = 'human'"
+        >
+          Hide human
+        </button>
       </div>
       <div class="flex flex-col gap-2">
         <label
@@ -498,7 +547,16 @@ function acceptInvite(): void {
           :data-indent="row.indent"
           :data-read="row.item.read ? 'true' : 'false'"
           :data-bookmarked="row.item.bookmarked ? 'true' : 'false'"
+          :data-origin="row.item.message.origin ?? ''"
         >
+          <span
+            v-if="row.item.message.origin === 'human'"
+            data-testid="origin-badge"
+          >Human</span>
+          <span
+            v-else-if="row.item.message.origin === 'ai'"
+            data-testid="origin-badge"
+          >AI</span>
           <span v-if="row.item.message.verified">{{ row.item.message.body }}</span>
           <span v-else>A message could not be verified.</span>
           <div class="flex flex-wrap gap-2">

@@ -33,6 +33,7 @@ export type { PostedMessage, ReadableMessage } from "./events.ts";
 export {
   applyTheme,
   catchUpItems,
+  excludeOrigin,
   rankItems,
   RECENCY_HALF_LIFE_MS,
   textMatchesTheme,
@@ -50,3 +51,4 @@ export {
   StreamError,
 } from "./stream.ts";
 export type { Theme } from "./stream.ts";
+export { postMessageTool, runPostMessageCli } from "./post-tool.ts";

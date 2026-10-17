@@ -47,7 +47,7 @@ export interface ReadableMessage {
   readonly body?: string;
   readonly authorPublicKey?: string;
   readonly createdAt?: string;
-  readonly origin?: "human";
+  readonly origin?: "human" | "ai";
   readonly parentId?: string | null;
 }
 
@@ -96,7 +96,7 @@ export async function postMessage(
     readonly parentId?: string | null;
   },
 ): Promise<PostedMessage> {
-  if (input.origin !== "human") throw new MessageError("origin");
+  if (input.origin !== "human" && input.origin !== "ai") throw new MessageError("origin");
   if (input.body.length === 0 || input.body.length > BODY_LIMIT) throw new MessageError("empty");
   if (publicKeyOf(author.privateKey) !== author.publicKey) throw new MessageError("unverified");
   const parentId = input.parentId ?? null;
@@ -110,7 +110,7 @@ export async function postMessage(
       body: input.body,
       clubId: input.clubId,
       createdAt: input.now,
-      origin: "human",
+      origin: input.origin,
       parentId,
     });
     const packed = JSON.stringify({
@@ -176,7 +176,7 @@ export async function readMessage(
     body: opened.body,
     authorPublicKey: opened.authorPublicKey,
     createdAt: opened.createdAt,
-    origin: "human",
+    origin: opened.origin,
     parentId: opened.parentId,
   };
 }
@@ -243,7 +243,7 @@ async function openEvent(
   db: SqlExecutor,
   readerPrivateKey: Uint8Array,
   eventId: string,
-): Promise<{ body: string; authorPublicKey: string; createdAt: string; parentId: string | null }> {
+): Promise<{ body: string; authorPublicKey: string; createdAt: string; parentId: string | null; origin: "human" | "ai" }> {
   let readerPublic = "";
   try {
     readerPublic = publicKeyOf(readerPrivateKey);
@@ -298,7 +298,7 @@ async function openEvent(
 function verifiedPlaintext(
   packedBytes: Uint8Array,
   event: StoredEvent,
-): { body: string; authorPublicKey: string; createdAt: string; parentId: string | null } {
+): { body: string; authorPublicKey: string; createdAt: string; parentId: string | null; origin: "human" | "ai" } {
   let packed: unknown;
   try {
     packed = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(packedBytes)) as unknown;
@@ -317,7 +317,11 @@ function verifiedPlaintext(
   } catch {
     throw new MessageError("unverified");
   }
-  if (!isRecord(claims) || claims.origin !== "human" || typeof claims.body !== "string") {
+  if (
+    !isRecord(claims) ||
+    (claims.origin !== "human" && claims.origin !== "ai") ||
+    typeof claims.body !== "string"
+  ) {
     throw new MessageError("unverified");
   }
   if (
@@ -333,6 +337,7 @@ function verifiedPlaintext(
     authorPublicKey: event.author_public_key,
     createdAt: event.created_at,
     parentId: event.parent_id,
+    origin: claims.origin,
   };
 }
 
