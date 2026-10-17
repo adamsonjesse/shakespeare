@@ -1,4 +1,6 @@
 mod db;
+mod hexkey;
+mod keystore;
 
 use tauri::Manager;
 
@@ -6,11 +8,17 @@ use tauri::Manager;
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
-            let connection = db::open(app.handle()).map_err(std::io::Error::other)?;
-            app.manage(db::AppDb::new(connection));
+            app.manage(db::AppDb::new());
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![db::db_execute, db::db_select])
+        .invoke_handler(tauri::generate_handler![
+            db::db_execute,
+            db::db_select,
+            db::profile_list,
+            db::profile_open,
+            keystore::keystore_load,
+            keystore::keystore_save,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

@@ -1,5 +1,22 @@
+export { bytesToHex, hexToBytes, generateIdentity, loadIdentity, MemoryKeyStore } from "./identity.ts";
+export type { Identity, KeyStore } from "./identity.ts";
+export { createInvite, inviteLink, INVITE_LINK_PREFIX, readInvite } from "./invite.ts";
+export type { InviteClaims } from "./invite.ts";
+export {
+  acceptInvite,
+  applyAcceptance,
+  commitInvitee,
+  createClub,
+  listClubs,
+  listMembers,
+  MembershipError,
+  prepareAcceptance,
+  serializeAcceptance,
+} from "./membership.ts";
+export type { Acceptance, Club, CreateClubInput, Member, MemberRole, MembershipErrorCode } from "./membership.ts";
 export { migrate, UnknownSchemaVersionError } from "./migrate.ts";
 export type { MigrateOptions } from "./migrate.ts";
 export { MIGRATIONS } from "./migrations.ts";
 export type { Migration } from "./migrations.ts";
 export type { SqlExecutor, SqlValue } from "./storage.ts";
+export { TestLoopback } from "./test-loopback.ts";

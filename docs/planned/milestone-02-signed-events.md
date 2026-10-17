@@ -2,7 +2,7 @@
 
 **Status:** planned
 **Index:** [WORK_PLAN.md](WORK_PLAN.md)
-**Depends on:** [Milestone 1](milestone-01-identity-invites.md)
+**Depends on:** [Milestone 1](../completed/milestone-01-identity-invites.md)
 **Blocks:** [Milestone 3](milestone-03-stream-ranking.md) and [Milestone 5](milestone-05-voluntary-files.md)
 
 ## Outcome

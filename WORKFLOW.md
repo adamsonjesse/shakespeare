@@ -270,10 +270,10 @@ milestone the user has asked for.
 
 ### Next milestone
 
-Milestone 1, Identity and invites, is the next eligible milestone.
-Its plan is [docs/planned/milestone-01-identity-invites.md](docs/planned/milestone-01-identity-invites.md).
+Milestone 2, Signed events and local store, is the next eligible milestone.
+Its plan is [docs/planned/milestone-02-signed-events.md](docs/planned/milestone-02-signed-events.md).
 It has not started. The order is in `docs/planned/WORK_PLAN.md`.
-Do not start Milestone 1, or any later milestone, unless the user asks.
+Do not start Milestone 2, or any later milestone, unless the user asks.
 
 ## Engineering rules
 
