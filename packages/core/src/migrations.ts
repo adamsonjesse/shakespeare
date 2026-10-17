@@ -87,4 +87,21 @@ export const MIGRATIONS: readonly Migration[] = [
       )`,
     ],
   },
+  {
+    version: 5,
+    statements: [
+      `CREATE TABLE blob_index (
+        hash TEXT PRIMARY KEY NOT NULL,
+        size INTEGER NOT NULL,
+        path TEXT NOT NULL,
+        verified_at TEXT NOT NULL
+      )`,
+      `CREATE TABLE download_requests (
+        event_id TEXT NOT NULL,
+        path TEXT NOT NULL,
+        state TEXT NOT NULL CHECK (state IN ('requested', 'verified', 'rejected')),
+        PRIMARY KEY (event_id, path)
+      )`,
+    ],
+  },
 ];

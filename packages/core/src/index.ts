@@ -52,3 +52,12 @@ export {
 } from "./stream.ts";
 export type { Theme } from "./stream.ts";
 export { postMessageTool, runPostMessageCli } from "./post-tool.ts";
+export {
+  assertSharePath,
+  buildManifest,
+  downloadSelected,
+  FileShareError,
+  manifestText,
+  parseManifest,
+} from "./files.ts";
+export type { BlobStore, FolderManifest, ManifestFile, OutputStore } from "./files.ts";

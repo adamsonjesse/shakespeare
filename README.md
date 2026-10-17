@@ -14,7 +14,8 @@ The club opens as one stream: local themes filter it, unread items can be
 sorted into a catch-up list, and a reply sits one level under its parent.
 Read marks and bookmarks stay on that profile. A composed message is tagged
 Human. A local post tool tags the same identity as AI, and the stream can
-hide either tag. Files are a later milestone.
+hide either tag. A member can offer a folder. Another member sees the names
+and sizes only, then downloads the files they choose. A bad hash is rejected.
 
 ## Prerequisites
 

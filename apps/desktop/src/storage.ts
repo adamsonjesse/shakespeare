@@ -30,5 +30,25 @@ export function createTauriHost(): ProfileHost {
       const stored = await invoke<string | null>("keystore_load", { publicKey });
       return stored === null ? null : hexToBytes(stored);
     },
+    async readFolder(path: string): Promise<readonly { readonly path: string; readonly bytes: Uint8Array }[]> {
+      const files = await invoke<{ path: string; bytes: number[] }[]>("read_share_folder", { path });
+      return files.map((file) => ({ path: file.path, bytes: Uint8Array.from(file.bytes) }));
+    },
+    async readBlob(publicKey: string, hash: string): Promise<Uint8Array | null> {
+      const bytes = await invoke<number[] | null>("read_profile_blob", { publicKey, hash });
+      return bytes === null ? null : Uint8Array.from(bytes);
+    },
+    async writeBlob(publicKey: string, hash: string, bytes: Uint8Array): Promise<void> {
+      await invoke("write_profile_blob", { publicKey, hash, bytes: [...bytes] });
+    },
+    async removeBlob(publicKey: string, hash: string): Promise<void> {
+      await invoke("remove_profile_blob", { publicKey, hash });
+    },
+    async writeOutput(publicKey: string, path: string, bytes: Uint8Array): Promise<void> {
+      await invoke("write_download", { publicKey, relativePath: path, bytes: [...bytes] });
+    },
+    async removeOutput(publicKey: string, path: string): Promise<void> {
+      await invoke("remove_download", { publicKey, relativePath: path });
+    },
   };
 }

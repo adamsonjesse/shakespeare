@@ -1,9 +1,9 @@
 # Milestone 5: Voluntary file sharing
 
-**Status:** planned
-**Index:** [WORK_PLAN.md](WORK_PLAN.md)
+**Status:** completed
+**Index:** [WORK_PLAN.md](../planned/WORK_PLAN.md)
 **Depends on:** [Milestone 2](../completed/milestone-02-signed-events.md) and [Milestone 3](../completed/milestone-03-stream-ranking.md)
-**Blocks:** [Milestone 6](milestone-06-hybrid-transport.md), [Milestone 8](milestone-08-mcp-cli.md), and [Milestone 9](milestone-09-mobile.md)
+**Blocks:** [Milestone 6](../planned/milestone-06-hybrid-transport.md), [Milestone 8](../planned/milestone-08-mcp-cli.md), and [Milestone 9](../planned/milestone-09-mobile.md)
 
 ## Outcome
 

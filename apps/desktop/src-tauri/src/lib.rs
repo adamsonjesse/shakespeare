@@ -1,4 +1,5 @@
 mod db;
+mod files;
 mod hexkey;
 mod keystore;
 
@@ -18,6 +19,12 @@ pub fn run() {
             db::profile_open,
             keystore::keystore_load,
             keystore::keystore_save,
+            files::read_share_folder,
+            files::remove_profile_blob,
+            files::read_profile_blob,
+            files::remove_download,
+            files::write_download,
+            files::write_profile_blob,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

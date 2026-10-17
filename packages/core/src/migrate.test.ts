@@ -44,7 +44,7 @@ describe("migrate", () => {
     const { executor, close } = await temporaryDatabase();
     try {
       const version = await migrate(executor, MIGRATIONS, { now: NOW });
-      expect(version).toBe(4);
+      expect(version).toBe(5);
       const rows = await executor.select<{ version: number; applied_at: string }>(
         "SELECT version, applied_at FROM schema_migrations ORDER BY version",
       );
@@ -53,6 +53,7 @@ describe("migrate", () => {
         { version: 2, applied_at: NOW },
         { version: 3, applied_at: NOW },
         { version: 4, applied_at: NOW },
+        { version: 5, applied_at: NOW },
       ]);
     } finally {
       close();
@@ -67,7 +68,7 @@ describe("migrate", () => {
       const rows = await executor.select<{ version: number }>(
         "SELECT version FROM schema_migrations ORDER BY version",
       );
-      expect(rows).toEqual([{ version: 1 }, { version: 2 }, { version: 3 }, { version: 4 }]);
+      expect(rows).toEqual([{ version: 1 }, { version: 2 }, { version: 3 }, { version: 4 }, { version: 5 }]);
     } finally {
       close();
     }
@@ -142,7 +143,7 @@ describe("migrate", () => {
     try {
       const upgraded = openExecutor(copied);
       const version = await migrate(upgraded, MIGRATIONS, { now: "2026-10-18T00:00:00.000Z" });
-      expect(version).toBe(4);
+      expect(version).toBe(5);
       const rows = await upgraded.select<{ version: number; applied_at: string }>(
         "SELECT version, applied_at FROM schema_migrations ORDER BY version",
       );
@@ -151,14 +152,17 @@ describe("migrate", () => {
         { version: 2, applied_at: "2026-10-18T00:00:00.000Z" },
         { version: 3, applied_at: "2026-10-18T00:00:00.000Z" },
         { version: 4, applied_at: "2026-10-18T00:00:00.000Z" },
+        { version: 5, applied_at: "2026-10-18T00:00:00.000Z" },
       ]);
       const tables = await upgraded.select<{ name: string }>(
         "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name",
       );
       expect(tables.map((table) => table.name)).toEqual([
+        "blob_index",
         "bookmarks",
         "club_key_wraps",
         "clubs",
+        "download_requests",
         "event_key_wraps",
         "events",
         "memberships",
@@ -190,7 +194,7 @@ describe("migrate", () => {
     try {
       const upgraded = openExecutor(copied);
       const version = await migrate(upgraded, MIGRATIONS, { now: "2026-10-18T00:00:00.000Z" });
-      expect(version).toBe(4);
+      expect(version).toBe(5);
       const rows = await upgraded.select<{ version: number; applied_at: string }>(
         "SELECT version, applied_at FROM schema_migrations ORDER BY version",
       );
@@ -199,14 +203,17 @@ describe("migrate", () => {
         { version: 2, applied_at: NOW },
         { version: 3, applied_at: "2026-10-18T00:00:00.000Z" },
         { version: 4, applied_at: "2026-10-18T00:00:00.000Z" },
+        { version: 5, applied_at: "2026-10-18T00:00:00.000Z" },
       ]);
       const tables = await upgraded.select<{ name: string }>(
         "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name",
       );
       expect(tables.map((table) => table.name)).toEqual([
+        "blob_index",
         "bookmarks",
         "club_key_wraps",
         "clubs",
+        "download_requests",
         "event_key_wraps",
         "events",
         "memberships",
@@ -238,7 +245,7 @@ describe("migrate", () => {
     try {
       const upgraded = openExecutor(copied);
       const version = await migrate(upgraded, MIGRATIONS, { now: "2026-10-18T00:00:00.000Z" });
-      expect(version).toBe(4);
+      expect(version).toBe(5);
       const rows = await upgraded.select<{ version: number; applied_at: string }>(
         "SELECT version, applied_at FROM schema_migrations ORDER BY version",
       );
@@ -247,14 +254,17 @@ describe("migrate", () => {
         { version: 2, applied_at: NOW },
         { version: 3, applied_at: NOW },
         { version: 4, applied_at: "2026-10-18T00:00:00.000Z" },
+        { version: 5, applied_at: "2026-10-18T00:00:00.000Z" },
       ]);
       const tables = await upgraded.select<{ name: string }>(
         "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name",
       );
       expect(tables.map((table) => table.name)).toEqual([
+        "blob_index",
         "bookmarks",
         "club_key_wraps",
         "clubs",
+        "download_requests",
         "event_key_wraps",
         "events",
         "memberships",

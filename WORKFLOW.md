@@ -270,10 +270,10 @@ milestone the user has asked for.
 
 ### Next milestone
 
-Milestone 5, Voluntary file sharing, is the next eligible milestone.
-Its plan is [docs/planned/milestone-05-voluntary-files.md](docs/planned/milestone-05-voluntary-files.md).
+Milestone 6, Hybrid transport and hub skeleton, is the next eligible milestone.
+Its plan is [docs/planned/milestone-06-hybrid-transport.md](docs/planned/milestone-06-hybrid-transport.md).
 It has not started. The order is in `docs/planned/WORK_PLAN.md`.
-Do not start Milestone 5, or any later milestone, unless the user asks.
+Do not start Milestone 6, or any later milestone, unless the user asks.
 
 ## Engineering rules
 

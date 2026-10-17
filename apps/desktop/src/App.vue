@@ -13,6 +13,7 @@ import {
   type Club,
   type Member,
   type ReadableMessage,
+  parseManifest,
   type Theme,
 } from "@shakespeare/core";
 
@@ -33,6 +34,8 @@ const bookmarkIds = ref<string[]>([]);
 const catchUp = ref(false);
 const replyParentId = ref("");
 const hiddenOrigin = ref<"human" | "ai" | null>(null);
+const offerPath = ref("");
+const offerLabel = ref("notes");
 const clubName = ref("");
 const inviteHours = ref(24);
 const oneTime = ref(false);
@@ -245,6 +248,22 @@ function bookmarkMessage(eventId: string): void {
     await session.bookmark(eventId, new Date().toISOString());
     await refreshClubs();
     status.value = "Bookmark saved.";
+  });
+}
+
+function offerFolder(): void {
+  void run(async () => {
+    await session.offerFolder(selectedClubId.value, offerPath.value, offerLabel.value, new Date().toISOString());
+    offerPath.value = "";
+    await refreshClubs();
+    status.value = "Folder offered.";
+  });
+}
+
+function downloadFile(eventId: string, path: string, authorPublicKey: string): void {
+  void run(async () => {
+    await session.downloadShared(eventId, path, authorPublicKey, new Date().toISOString());
+    status.value = "Download verified.";
   });
 }
 
@@ -557,7 +576,30 @@ function acceptInvite(): void {
             v-else-if="row.item.message.origin === 'ai'"
             data-testid="origin-badge"
           >AI</span>
-          <span v-if="row.item.message.verified">{{ row.item.message.body }}</span>
+          <template v-if="row.item.message.verified && parseManifest(row.item.message.body ?? '')">
+            <p>{{ parseManifest(row.item.message.body ?? '')?.label }}</p>
+            <ul class="flex flex-col gap-1">
+              <li
+                v-for="file in parseManifest(row.item.message.body ?? '')?.files ?? []"
+                :key="file.path"
+                data-testid="manifest-file"
+                :data-path="file.path"
+                :data-hash="file.hash"
+              >
+                {{ file.path }} ({{ file.size }})
+                <button
+                  type="button"
+                  data-testid="download-file"
+                  class="rounded border border-stone-300 px-3 py-2"
+                  :disabled="busy"
+                  @click="downloadFile(row.item.id, file.path, row.item.message.authorPublicKey ?? '')"
+                >
+                  Download
+                </button>
+              </li>
+            </ul>
+          </template>
+          <span v-else-if="row.item.message.verified">{{ row.item.message.body }}</span>
           <span v-else>A message could not be verified.</span>
           <div class="flex flex-wrap gap-2">
             <button
@@ -606,6 +648,41 @@ function acceptInvite(): void {
         @click="replyParentId = ''"
       >
         Cancel reply
+      </button>
+      <label
+        class="flex flex-col gap-1 text-sm"
+        for="offer-path"
+      >
+        Folder path
+        <input
+          id="offer-path"
+          v-model="offerPath"
+          data-testid="offer-path"
+          class="rounded border border-stone-300 px-3 py-2"
+          type="text"
+        >
+      </label>
+      <label
+        class="flex flex-col gap-1 text-sm"
+        for="offer-label"
+      >
+        Folder label
+        <input
+          id="offer-label"
+          v-model="offerLabel"
+          data-testid="offer-label"
+          class="rounded border border-stone-300 px-3 py-2"
+          type="text"
+        >
+      </label>
+      <button
+        type="button"
+        data-testid="offer-folder"
+        class="w-fit rounded bg-stone-900 px-3 py-2 text-white disabled:opacity-50"
+        :disabled="busy"
+        @click="offerFolder"
+      >
+        Offer folder
       </button>
       <label
         class="flex flex-col gap-1 text-sm"

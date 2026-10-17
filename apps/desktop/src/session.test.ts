@@ -19,11 +19,19 @@ function createHost(dir: string): {
   host: ProfileHost;
   paths: Map<string, string>;
   secrets: Uint8Array[];
+  folders: Map<string, { path: string; bytes: Uint8Array }[]>;
+  blobs: Map<string, Uint8Array>;
+  outputs: Map<string, Uint8Array>;
+  blobReads: string[];
   close: () => void;
 } {
   const store = new MemoryKeyStore();
   const paths = new Map<string, string>();
   const secrets: Uint8Array[] = [];
+  const folders = new Map<string, { path: string; bytes: Uint8Array }[]>();
+  const blobs = new Map<string, Uint8Array>();
+  const outputs = new Map<string, Uint8Array>();
+  const blobReads: string[] = [];
   let current: DatabaseSync | null = null;
   const host: ProfileHost = {
     async listProfiles() {
@@ -53,11 +61,35 @@ function createHost(dir: string): {
       await store.save(publicKey, privateKey);
     },
     loadPrivateKey: (publicKey: string) => store.load(publicKey),
+    async readFolder(path: string) {
+      return (folders.get(path) ?? []).map((file) => ({ path: file.path, bytes: new Uint8Array(file.bytes) }));
+    },
+    async readBlob(publicKey: string, hash: string) {
+      blobReads.push(hash);
+      const found = blobs.get(`${publicKey}/${hash}`);
+      return found ? new Uint8Array(found) : null;
+    },
+    async writeBlob(publicKey: string, hash: string, bytes: Uint8Array) {
+      blobs.set(`${publicKey}/${hash}`, new Uint8Array(bytes));
+    },
+    async removeBlob(publicKey: string, hash: string) {
+      blobs.delete(`${publicKey}/${hash}`);
+    },
+    async writeOutput(publicKey: string, path: string, bytes: Uint8Array) {
+      outputs.set(`${publicKey}/${path}`, new Uint8Array(bytes));
+    },
+    async removeOutput(publicKey: string, path: string) {
+      outputs.delete(`${publicKey}/${path}`);
+    },
   };
   return {
     host,
     paths,
     secrets,
+    folders,
+    blobs,
+    outputs,
+    blobReads,
     close: () => {
       current?.close();
       current = null;
@@ -189,6 +221,38 @@ describe("local profiles", () => {
       expect(await session.bookmarkIds()).toEqual([first.id]);
       expect(await session.readIds()).toEqual([first.id]);
       expect((await session.themes()).map((theme) => theme.name)).toEqual(["Focus"]);
+    } finally {
+      close();
+    }
+  });
+
+  it("offers a folder and downloads only the selected file", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "shakespeare-session-files-"));
+    directories.push(dir);
+    const { host, folders, blobs, outputs, blobReads, close } = createHost(dir);
+    try {
+      const session = createSession(host);
+      const alice = await session.createProfile(NOW);
+      const clubId = await session.createClub("Alpha", NOW);
+      const link = await session.issueInvite({ clubId, expiresAt: LATER, oneTime: false });
+      const bob = await session.createProfile(NOW);
+      await session.acceptInvite(link, NOW);
+      await session.openProfile(alice, NOW);
+      folders.set(join(dir, "offer"), [
+        { path: "a.txt", bytes: Uint8Array.from([1, 2, 3]) },
+        { path: "b.txt", bytes: Uint8Array.from([4, 5, 6]) },
+      ]);
+      await session.offerFolder(clubId, join(dir, "offer"), "notes", NOW);
+      await session.openProfile(bob, NOW);
+      const messages = await session.messages(clubId);
+      const offer = messages.find((message) => message.body?.includes("notes"));
+      if (!offer?.body) throw new Error("missing offer");
+      expect(offer.body.includes("a.txt")).toBe(true);
+      expect(outputs.size).toBe(0);
+      await session.downloadShared(offer.id, "b.txt", alice, LATER);
+      expect([...outputs.keys()]).toEqual([`${bob}/b.txt`]);
+      expect([...blobs.keys()].filter((key) => key.startsWith(`${bob}/`))).toHaveLength(1);
+      expect(blobReads.length).toBeGreaterThan(0);
     } finally {
       close();
     }

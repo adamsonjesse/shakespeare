@@ -1,6 +1,11 @@
 import {
   addBookmark,
   applyAcceptance,
+  buildManifest,
+  downloadSelected,
+  FileShareError,
+  manifestText,
+  parseManifest,
   commitInvitee,
   createClub as insertClub,
   createInvite,
@@ -39,6 +44,12 @@ export interface ProfileHost {
   openProfile(publicKey: string): Promise<SqlExecutor>;
   savePrivateKey(publicKey: string, privateKey: Uint8Array): Promise<void>;
   loadPrivateKey(publicKey: string): Promise<Uint8Array | null>;
+  readFolder(path: string): Promise<readonly { readonly path: string; readonly bytes: Uint8Array }[]>;
+  readBlob(publicKey: string, hash: string): Promise<Uint8Array | null>;
+  writeBlob(publicKey: string, hash: string, bytes: Uint8Array): Promise<void>;
+  removeBlob(publicKey: string, hash: string): Promise<void>;
+  writeOutput(publicKey: string, path: string, bytes: Uint8Array): Promise<void>;
+  removeOutput(publicKey: string, path: string): Promise<void>;
 }
 
 export interface Session {
@@ -60,6 +71,8 @@ export interface Session {
   bookmarkIds(): Promise<string[]>;
   saveTheme(name: string, terms: readonly string[]): Promise<void>;
   themes(): Promise<Theme[]>;
+  offerFolder(clubId: string, folderPath: string, label: string, now: string): Promise<void>;
+  downloadShared(eventId: string, path: string, seederPublicKey: string, now: string): Promise<void>;
 }
 
 /**
@@ -247,6 +260,60 @@ export function createSession(host: ProfileHost): Session {
 
     async themes(): Promise<Theme[]> {
       return listThemes(requireOpen().database);
+    },
+
+    async offerFolder(clubId: string, folderPath: string, label: string, now: string): Promise<void> {
+      const active = requireOpen();
+      const folder = await host.readFolder(folderPath);
+      const manifest = buildManifest(folder, label);
+      for (const file of manifest.files) {
+        const source = folder.find((entry) => entry.path === file.path);
+        if (!source) throw new FileShareError("missing");
+        await host.writeBlob(active.identity.publicKey, file.hash, source.bytes);
+      }
+      const posted = await postMessage(active.database, active.identity, {
+        clubId,
+        body: manifestText(manifest),
+        now,
+        origin: "human",
+      });
+      await fanOut(active.identity.publicKey, clubId, now, posted.envelope);
+    },
+
+    async downloadShared(eventId: string, path: string, seederPublicKey: string, now: string): Promise<void> {
+      const active = requireOpen();
+      const listed = await active.database.select<{ club_id: string }>(
+        "SELECT club_id FROM events WHERE id = ?",
+        [eventId],
+      );
+      const clubId = listed[0]?.club_id;
+      if (!clubId) throw new FileShareError("missing");
+      const clubMessages = await selectMessageList(active.database, active.identity.privateKey, clubId);
+      const message = clubMessages.find((entry) => entry.id === eventId);
+      const manifest = message?.body ? parseManifest(message.body) : null;
+      if (!manifest || !message) throw new FileShareError("missing");
+      const reader = active.identity.publicKey;
+      await downloadSelected({
+        manifest,
+        paths: [path],
+        fetchHash: async (hash) => {
+          const bytes = await host.readBlob(seederPublicKey, hash);
+          if (!bytes) throw new FileShareError("absent");
+          return bytes;
+        },
+        blobs: {
+          read: (hash) => host.readBlob(reader, hash),
+          write: (hash, bytes) => host.writeBlob(reader, hash, bytes),
+          remove: (hash) => host.removeBlob(reader, hash),
+        },
+        output: {
+          write: (relative, bytes) => host.writeOutput(reader, relative, bytes),
+          remove: (relative) => host.removeOutput(reader, relative),
+        },
+        db: active.database,
+        eventId,
+        now,
+      });
     },
   };
 }
