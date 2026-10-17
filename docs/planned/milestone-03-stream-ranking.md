@@ -2,7 +2,7 @@
 
 **Status:** planned
 **Index:** [WORK_PLAN.md](WORK_PLAN.md)
-**Depends on:** [Milestone 2](milestone-02-signed-events.md)
+**Depends on:** [Milestone 2](../completed/milestone-02-signed-events.md)
 **Blocks:** [Milestone 4](milestone-04-ai-tagging.md), [Milestone 5](milestone-05-voluntary-files.md), and [Milestone 7](milestone-07-learned-ranking.md)
 
 ## Outcome

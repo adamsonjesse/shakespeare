@@ -1,9 +1,9 @@
 # Milestone 2: Signed events and local store
 
-**Status:** planned
-**Index:** [WORK_PLAN.md](WORK_PLAN.md)
+**Status:** completed
+**Index:** [WORK_PLAN.md](../planned/WORK_PLAN.md)
 **Depends on:** [Milestone 1](../completed/milestone-01-identity-invites.md)
-**Blocks:** [Milestone 3](milestone-03-stream-ranking.md) and [Milestone 5](milestone-05-voluntary-files.md)
+**Blocks:** [Milestone 3](../planned/milestone-03-stream-ranking.md) and [Milestone 5](../planned/milestone-05-voluntary-files.md)
 
 ## Outcome
 

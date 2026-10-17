@@ -4,13 +4,16 @@ import {
   createClub as insertClub,
   createInvite,
   generateIdentity,
+  importEnvelope,
   inviteLink,
   listClubs as selectClubs,
   listMembers as selectMembers,
+  listMessages as selectMessageList,
   loadIdentity,
   MembershipError,
   migrate,
   MIGRATIONS,
+  postMessage,
   prepareAcceptance,
   readInvite,
   serializeAcceptance,
@@ -18,6 +21,7 @@ import {
   type Identity,
   type KeyStore,
   type Member,
+  type ReadableMessage,
   type SqlExecutor,
 } from "@shakespeare/core";
 
@@ -39,6 +43,8 @@ export interface Session {
   listMembers(clubId: string): Promise<Member[]>;
   issueInvite(input: { clubId: string; expiresAt: string; oneTime: boolean }): Promise<string>;
   acceptInvite(pasted: string, now: string): Promise<{ deliveredLocally: boolean; clubId: string }>;
+  sendMessage(clubId: string, body: string, now: string): Promise<void>;
+  messages(clubId: string): Promise<ReadableMessage[]>;
 }
 
 /**
@@ -152,6 +158,36 @@ export function createSession(host: ProfileHost): Session {
       if (!database) throw new Error("No profile is open.");
       await commitInvitee(database, acceptance, now);
       return { deliveredLocally, clubId: acceptance.clubId };
+    },
+
+    async sendMessage(clubId: string, body: string, now: string): Promise<void> {
+      const active = requireOpen();
+      const posted = await postMessage(active.database, active.identity, {
+        clubId,
+        body,
+        now,
+        origin: "human",
+      });
+      const members = await selectMembers(active.database, clubId);
+      const profiles = await host.listProfiles();
+      for (const member of members) {
+        if (member.publicKey === active.identity.publicKey || !profiles.includes(member.publicKey)) {
+          continue;
+        }
+        try {
+          const other = await openDatabase(member.publicKey, now);
+          await importEnvelope(other, posted.envelope);
+        } catch (error) {
+          database = await openDatabase(active.identity.publicKey, now);
+          throw error;
+        }
+      }
+      database = await openDatabase(active.identity.publicKey, now);
+    },
+
+    async messages(clubId: string): Promise<ReadableMessage[]> {
+      const active = requireOpen();
+      return selectMessageList(active.database, active.identity.privateKey, clubId);
     },
   };
 }

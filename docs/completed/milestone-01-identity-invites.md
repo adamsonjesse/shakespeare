@@ -3,7 +3,7 @@
 **Status:** completed
 **Index:** [WORK_PLAN.md](../planned/WORK_PLAN.md)
 **Depends on:** [Milestone 0](../completed/milestone-00-foundation.md)
-**Blocks:** [Milestone 2](../planned/milestone-02-signed-events.md)
+**Blocks:** [Milestone 2](../completed/milestone-02-signed-events.md)
 
 ## Outcome
 

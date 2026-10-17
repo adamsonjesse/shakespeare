@@ -20,3 +20,13 @@ export { MIGRATIONS } from "./migrations.ts";
 export type { Migration } from "./migrations.ts";
 export type { SqlExecutor, SqlValue } from "./storage.ts";
 export { TestLoopback } from "./test-loopback.ts";
+export {
+  importEnvelope,
+  listMessages,
+  MessageError,
+  postMessage,
+  readMessage,
+  removeMember,
+  TestHub,
+} from "./events.ts";
+export type { PostedMessage, ReadableMessage } from "./events.ts";

@@ -44,13 +44,14 @@ describe("migrate", () => {
     const { executor, close } = await temporaryDatabase();
     try {
       const version = await migrate(executor, MIGRATIONS, { now: NOW });
-      expect(version).toBe(2);
+      expect(version).toBe(3);
       const rows = await executor.select<{ version: number; applied_at: string }>(
         "SELECT version, applied_at FROM schema_migrations ORDER BY version",
       );
       expect(rows).toEqual([
         { version: 1, applied_at: NOW },
         { version: 2, applied_at: NOW },
+        { version: 3, applied_at: NOW },
       ]);
     } finally {
       close();
@@ -65,7 +66,7 @@ describe("migrate", () => {
       const rows = await executor.select<{ version: number }>(
         "SELECT version FROM schema_migrations ORDER BY version",
       );
-      expect(rows).toEqual([{ version: 1 }, { version: 2 }]);
+      expect(rows).toEqual([{ version: 1 }, { version: 2 }, { version: 3 }]);
     } finally {
       close();
     }
@@ -140,19 +141,67 @@ describe("migrate", () => {
     try {
       const upgraded = openExecutor(copied);
       const version = await migrate(upgraded, MIGRATIONS, { now: "2026-10-18T00:00:00.000Z" });
-      expect(version).toBe(2);
+      expect(version).toBe(3);
       const rows = await upgraded.select<{ version: number; applied_at: string }>(
         "SELECT version, applied_at FROM schema_migrations ORDER BY version",
       );
       expect(rows).toEqual([
         { version: 1, applied_at: NOW },
         { version: 2, applied_at: "2026-10-18T00:00:00.000Z" },
+        { version: 3, applied_at: "2026-10-18T00:00:00.000Z" },
       ]);
       const tables = await upgraded.select<{ name: string }>(
         "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name",
       );
       expect(tables.map((table) => table.name)).toEqual([
+        "club_key_wraps",
         "clubs",
+        "event_key_wraps",
+        "events",
+        "memberships",
+        "schema_migrations",
+        "used_invites",
+      ]);
+    } finally {
+      copied.close();
+    }
+  });
+
+  it("migrates a version 2 database to version 3 and keeps earlier rows", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "shakespeare-migrate-v2-"));
+    directories.push(dir);
+    const original = join(dir, "v2.db");
+    const created = new DatabaseSync(original);
+    await migrate(
+      openExecutor(created),
+      MIGRATIONS.filter((migration) => migration.version <= 2),
+      { now: NOW },
+    );
+    created.close();
+
+    const copy = join(dir, "copy.db");
+    await copyFile(original, copy);
+    const copied = new DatabaseSync(copy);
+    try {
+      const upgraded = openExecutor(copied);
+      const version = await migrate(upgraded, MIGRATIONS, { now: "2026-10-18T00:00:00.000Z" });
+      expect(version).toBe(3);
+      const rows = await upgraded.select<{ version: number; applied_at: string }>(
+        "SELECT version, applied_at FROM schema_migrations ORDER BY version",
+      );
+      expect(rows).toEqual([
+        { version: 1, applied_at: NOW },
+        { version: 2, applied_at: NOW },
+        { version: 3, applied_at: "2026-10-18T00:00:00.000Z" },
+      ]);
+      const tables = await upgraded.select<{ name: string }>(
+        "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name",
+      );
+      expect(tables.map((table) => table.name)).toEqual([
+        "club_key_wraps",
+        "clubs",
+        "event_key_wraps",
+        "events",
         "memberships",
         "schema_migrations",
         "used_invites",

@@ -3,7 +3,7 @@ import { onMounted, ref, watch } from "vue";
 import QRCode from "qrcode";
 import { createSession } from "./session.ts";
 import { createTauriHost } from "./storage.ts";
-import type { Club, Member } from "@shakespeare/core";
+import type { Club, Member, ReadableMessage } from "@shakespeare/core";
 
 const session = createSession(createTauriHost());
 const profiles = ref<string[]>([]);
@@ -11,6 +11,8 @@ const currentPublicKey = ref("");
 const clubs = ref<Club[]>([]);
 const selectedClubId = ref("");
 const members = ref<Member[]>([]);
+const messages = ref<ReadableMessage[]>([]);
+const messageBody = ref("");
 const clubName = ref("");
 const inviteHours = ref(24);
 const oneTime = ref(false);
@@ -69,9 +71,11 @@ async function refreshClubs(): Promise<void> {
   if (!clubs.value.some((club) => club.id === selectedClubId.value)) {
     selectedClubId.value = "";
     members.value = [];
+    messages.value = [];
     return;
   }
   members.value = await session.listMembers(selectedClubId.value);
+  messages.value = await session.messages(selectedClubId.value);
 }
 
 async function run(action: () => Promise<void>): Promise<void> {
@@ -96,6 +100,7 @@ function createProfile(): void {
     selectedClubId.value = "";
     inviteLink.value = "";
     members.value = [];
+    messages.value = [];
     await refreshClubs();
     status.value = "Profile ready.";
   });
@@ -130,6 +135,17 @@ function selectClub(clubId: string): void {
     selectedClubId.value = clubId;
     inviteLink.value = "";
     members.value = await session.listMembers(clubId);
+    messages.value = await session.messages(clubId);
+  });
+}
+
+function sendMessage(): void {
+  void run(async () => {
+    const now = new Date().toISOString();
+    await session.sendMessage(selectedClubId.value, messageBody.value, now);
+    messageBody.value = "";
+    messages.value = await session.messages(selectedClubId.value);
+    status.value = "Message sent.";
   });
 }
 
@@ -293,6 +309,44 @@ function acceptInvite(): void {
           {{ roleLabel(member.role) }} {{ shortKey(member.publicKey) }}
         </li>
       </ul>
+
+      <h2 class="text-lg font-semibold">
+        Messages
+      </h2>
+      <ul
+        data-testid="message-list"
+        class="flex flex-col gap-2"
+      >
+        <li
+          v-for="message in messages"
+          :key="message.id"
+          data-testid="message-row"
+        >
+          <span v-if="message.verified">{{ message.body }}</span>
+          <span v-else>A message could not be verified.</span>
+        </li>
+      </ul>
+      <label
+        class="flex flex-col gap-1 text-sm"
+        for="message-body"
+      >
+        Message
+        <textarea
+          id="message-body"
+          v-model="messageBody"
+          data-testid="message-body"
+          class="min-h-20 rounded border border-stone-300 px-3 py-2"
+        />
+      </label>
+      <button
+        type="button"
+        data-testid="send-message"
+        class="w-fit rounded bg-stone-900 px-3 py-2 text-white disabled:opacity-50"
+        :disabled="busy"
+        @click="sendMessage"
+      >
+        Send
+      </button>
 
       <h2 class="text-lg font-semibold">
         Invite

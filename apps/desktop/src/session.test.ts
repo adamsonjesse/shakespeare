@@ -137,4 +137,30 @@ describe("local profiles", () => {
       }
     }
   });
+
+  it("delivers a human message to the other local profile", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "shakespeare-session-message-"));
+    directories.push(dir);
+    const { host, paths, close } = createHost(dir);
+    try {
+      const session = createSession(host);
+      const alice = await session.createProfile(NOW);
+      const clubId = await session.createClub("Alpha", NOW);
+      const link = await session.issueInvite({ clubId, expiresAt: LATER, oneTime: false });
+      const bob = await session.createProfile(NOW);
+      await session.acceptInvite(link, NOW);
+      await session.openProfile(alice, NOW);
+      await session.sendMessage(clubId, "hello club", NOW);
+      await session.openProfile(bob, NOW);
+      const messages = await session.messages(clubId);
+      expect(messages.map((message) => message.body)).toEqual(["hello club"]);
+      expect(messages[0]?.authorPublicKey).toBe(alice);
+      expect(session.currentPublicKey()).toBe(bob);
+    } finally {
+      close();
+    }
+    for (const path of paths.values()) {
+      expect(readFileSync(path).includes(Buffer.from("hello club"))).toBe(false);
+    }
+  });
 });

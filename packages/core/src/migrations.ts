@@ -39,4 +39,32 @@ export const MIGRATIONS: readonly Migration[] = [
       )`,
     ],
   },
+  {
+    version: 3,
+    statements: [
+      `CREATE TABLE events (
+        id TEXT PRIMARY KEY NOT NULL,
+        club_id TEXT NOT NULL,
+        author_public_key TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        ciphertext TEXT NOT NULL,
+        parent_id TEXT,
+        FOREIGN KEY (club_id) REFERENCES clubs (id)
+      )`,
+      `CREATE TABLE event_key_wraps (
+        event_id TEXT NOT NULL,
+        member_public_key TEXT NOT NULL,
+        wrapped_key TEXT NOT NULL,
+        PRIMARY KEY (event_id, member_public_key),
+        FOREIGN KEY (event_id) REFERENCES events (id)
+      )`,
+      `CREATE TABLE club_key_wraps (
+        club_id TEXT NOT NULL,
+        member_public_key TEXT NOT NULL,
+        wrapped_key TEXT NOT NULL,
+        PRIMARY KEY (club_id, member_public_key),
+        FOREIGN KEY (club_id) REFERENCES clubs (id)
+      )`,
+    ],
+  },
 ];

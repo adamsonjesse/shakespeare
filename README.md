@@ -8,7 +8,9 @@ The desktop app creates a local profile, stores that profile's private key in
 the OS keychain, and keeps a separate SQLite file per profile. A profile can
 create a club, copy an invite link, and show a QR code for the same link.
 Another profile on the same device can accept the invite and show up as a
-member. Messages and files are later milestones.
+member. Two members of a club can send a short text message. The body is
+encrypted in that profile's SQLite file and still decrypts after a restart.
+Files are a later milestone.
 
 ## Prerequisites
 
@@ -39,7 +41,7 @@ Run these from the repository root after `pnpm install`.
 
 - `apps/desktop` — Tauri 2, Vue 3, TypeScript, and Tailwind. This is the Vue source.
 - `apps/mobile` — Capacitor project. Its web assets come from `apps/desktop`.
-- `packages/core` — Shared types, identity and invite rules, the storage interface, and the migration runner.
+- `packages/core` — Shared types, identity, invites, encrypted messages, the storage interface, and the migration runner.
 
 `packages/core` does not import Tauri, Capacitor, or a Node SQLite driver.
 Each desktop profile uses one SQLite file under the OS app-data directory at

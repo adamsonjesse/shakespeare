@@ -2,7 +2,7 @@
 
 **Status:** planned
 **Index:** [WORK_PLAN.md](WORK_PLAN.md)
-**Depends on:** [Milestone 2](milestone-02-signed-events.md) and [Milestone 3](milestone-03-stream-ranking.md)
+**Depends on:** [Milestone 2](../completed/milestone-02-signed-events.md) and [Milestone 3](milestone-03-stream-ranking.md)
 **Blocks:** [Milestone 6](milestone-06-hybrid-transport.md), [Milestone 8](milestone-08-mcp-cli.md), and [Milestone 9](milestone-09-mobile.md)
 
 ## Outcome
