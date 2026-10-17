@@ -104,4 +104,17 @@ export const MIGRATIONS: readonly Migration[] = [
       )`,
     ],
   },
+  {
+    version: 6,
+    statements: [
+      `CREATE TABLE outbox (
+        id TEXT PRIMARY KEY NOT NULL,
+        club_id TEXT NOT NULL,
+        envelope TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        state TEXT NOT NULL CHECK (state IN ('pending', 'sent')),
+        FOREIGN KEY (club_id) REFERENCES clubs (id)
+      )`,
+    ],
+  },
 ];

@@ -23,6 +23,7 @@ function createHost(dir: string): {
   blobs: Map<string, Uint8Array>;
   outputs: Map<string, Uint8Array>;
   blobReads: string[];
+  relay: { up: boolean; calls: string[] };
   close: () => void;
 } {
   const store = new MemoryKeyStore();
@@ -32,6 +33,7 @@ function createHost(dir: string): {
   const blobs = new Map<string, Uint8Array>();
   const outputs = new Map<string, Uint8Array>();
   const blobReads: string[] = [];
+  const relay = { up: false, calls: [] as string[] };
   let current: DatabaseSync | null = null;
   const host: ProfileHost = {
     async listProfiles() {
@@ -81,6 +83,13 @@ function createHost(dir: string): {
     async removeOutput(publicKey: string, path: string) {
       outputs.delete(`${publicKey}/${path}`);
     },
+    async relayExchange(_host: string, _port: number, request: string) {
+      relay.calls.push(request);
+      if (!relay.up) throw new Error("The hub is not reachable.");
+      const body = JSON.parse(request) as { op?: string };
+      if (body.op === "catch-up") return JSON.stringify({ ok: true, envelopes: [] });
+      return JSON.stringify({ ok: true });
+    },
   };
   return {
     host,
@@ -90,6 +99,7 @@ function createHost(dir: string): {
     blobs,
     outputs,
     blobReads,
+    relay,
     close: () => {
       current?.close();
       current = null;
@@ -253,6 +263,44 @@ describe("local profiles", () => {
       expect([...outputs.keys()]).toEqual([`${bob}/b.txt`]);
       expect([...blobs.keys()].filter((key) => key.startsWith(`${bob}/`))).toHaveLength(1);
       expect(blobReads.length).toBeGreaterThan(0);
+    } finally {
+      close();
+    }
+  });
+
+  it("keeps a hub send pending while the hub is down and flushes it after sync", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "shakespeare-session-hub-"));
+    directories.push(dir);
+    const { host, paths, relay, close } = createHost(dir);
+    try {
+      const session = createSession(host);
+      const alice = await session.createProfile(NOW);
+      const clubId = await session.createClub("Alpha", NOW);
+      session.configureHub("127.0.0.1", 8787);
+      await session.sendMessage(clubId, "hello club", NOW);
+      close();
+      const path = paths.get(alice);
+      if (!path) throw new Error("missing profile");
+      const pending = new DatabaseSync(path);
+      try {
+        const rows = pending.prepare("SELECT state FROM outbox").all() as { state: string }[];
+        expect(rows).toEqual([{ state: "pending" }]);
+      } finally {
+        pending.close();
+      }
+      await session.openProfile(alice, LATER);
+      relay.up = true;
+      await session.syncHub(LATER);
+      close();
+      const flushed = new DatabaseSync(path);
+      try {
+        const rows = flushed.prepare("SELECT state FROM outbox").all() as { state: string }[];
+        expect(rows).toEqual([{ state: "sent" }]);
+      } finally {
+        flushed.close();
+      }
+      expect(relay.calls.some((call) => call.includes("submit-envelope"))).toBe(true);
+      expect(relay.calls.some((call) => call.includes("hello club"))).toBe(false);
     } finally {
       close();
     }

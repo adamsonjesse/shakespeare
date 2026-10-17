@@ -50,5 +50,8 @@ export function createTauriHost(): ProfileHost {
     async removeOutput(publicKey: string, path: string): Promise<void> {
       await invoke("remove_download", { publicKey, relativePath: path });
     },
+    async relayExchange(host: string, port: number, request: string): Promise<string> {
+      return invoke<string>("relay_exchange", { host, port, request });
+    },
   };
 }

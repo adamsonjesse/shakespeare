@@ -2,6 +2,7 @@ mod db;
 mod files;
 mod hexkey;
 mod keystore;
+mod relay;
 
 use tauri::Manager;
 
@@ -25,6 +26,7 @@ pub fn run() {
             files::remove_download,
             files::write_download,
             files::write_profile_blob,
+            relay::relay_exchange,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

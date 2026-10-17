@@ -24,16 +24,23 @@ import {
   migrate,
   MIGRATIONS,
   postMessage,
+  readRelayResponse,
+  RelayError,
   runPostMessageCli,
   saveTheme as storeTheme,
   prepareAcceptance,
   readInvite,
   serializeAcceptance,
+  enqueueOutbox,
+  flushOutbox,
+  settleLocalOutbox,
+  syncWithHub,
   type Club,
   type Identity,
   type KeyStore,
   type Member,
   type ReadableMessage,
+  type RelayResponse,
   type SqlExecutor,
   type Theme,
 } from "@shakespeare/core";
@@ -50,6 +57,7 @@ export interface ProfileHost {
   removeBlob(publicKey: string, hash: string): Promise<void>;
   writeOutput(publicKey: string, path: string, bytes: Uint8Array): Promise<void>;
   removeOutput(publicKey: string, path: string): Promise<void>;
+  relayExchange(host: string, port: number, request: string): Promise<string>;
 }
 
 export interface Session {
@@ -73,6 +81,8 @@ export interface Session {
   themes(): Promise<Theme[]>;
   offerFolder(clubId: string, folderPath: string, label: string, now: string): Promise<void>;
   downloadShared(eventId: string, path: string, seederPublicKey: string, now: string): Promise<void>;
+  configureHub(host: string | null, port: number | null): void;
+  syncHub(now: string): Promise<void>;
 }
 
 /**
@@ -86,6 +96,46 @@ export function createSession(host: ProfileHost): Session {
   };
   let current: Identity | null = null;
   let database: SqlExecutor | null = null;
+  let hubAddress: { host: string; port: number } | null = null;
+
+  async function callHub(request: unknown): Promise<RelayResponse> {
+    if (!hubAddress) throw new RelayError("unreachable");
+    let raw = "";
+    try {
+      raw = await host.relayExchange(hubAddress.host, hubAddress.port, JSON.stringify(request));
+    } catch {
+      throw new RelayError("unreachable");
+    }
+    try {
+      return readRelayResponse(JSON.parse(raw) as unknown);
+    } catch {
+      throw new RelayError("forbidden");
+    }
+  }
+
+  async function publish(
+    clubId: string,
+    now: string,
+    posted: { readonly id: string; readonly envelope: string },
+  ): Promise<void> {
+    await fanOut(requireOpen().identity.publicKey, clubId, now, posted.envelope);
+    const active = requireOpen();
+    await enqueueOutbox(active.database, {
+      id: posted.id,
+      clubId,
+      envelope: posted.envelope,
+      now,
+    });
+    if (!hubAddress) {
+      await settleLocalOutbox(active.database);
+      return;
+    }
+    try {
+      await flushOutbox(active.database, active.identity, (request) => callHub(request));
+    } catch (error) {
+      if (!(error instanceof RelayError) || error.code !== "unreachable") throw error;
+    }
+  }
 
   async function openDatabase(publicKey: string, now: string): Promise<SqlExecutor> {
     const opened = await host.openProfile(publicKey);
@@ -219,7 +269,7 @@ export function createSession(host: ProfileHost): Session {
         origin: "human",
         parentId,
       });
-      await fanOut(active.identity.publicKey, clubId, now, posted.envelope);
+      await publish(clubId, now, posted);
     },
 
     async postToolMessage(clubId: string, body: string, now: string): Promise<void> {
@@ -230,7 +280,7 @@ export function createSession(host: ProfileHost): Session {
         now,
         origin: "human",
       });
-      await fanOut(active.identity.publicKey, clubId, now, posted.envelope);
+      await publish(clubId, now, posted);
     },
 
     async messages(clubId: string): Promise<ReadableMessage[]> {
@@ -277,7 +327,29 @@ export function createSession(host: ProfileHost): Session {
         now,
         origin: "human",
       });
-      await fanOut(active.identity.publicKey, clubId, now, posted.envelope);
+      await publish(clubId, now, posted);
+    },
+
+    configureHub(hostName: string | null, port: number | null): void {
+      if (hostName === null || port === null) {
+        hubAddress = null;
+        return;
+      }
+      if (hostName !== "127.0.0.1" || !Number.isInteger(port) || port < 1 || port > 65535) {
+        throw new RelayError("forbidden");
+      }
+      hubAddress = { host: hostName, port };
+    },
+
+    async syncHub(now: string): Promise<void> {
+      const active = requireOpen();
+      if (!hubAddress) throw new RelayError("unreachable");
+      await syncWithHub({
+        db: active.database,
+        author: active.identity,
+        now,
+        call: (request) => callHub(request),
+      });
     },
 
     async downloadShared(eventId: string, path: string, seederPublicKey: string, now: string): Promise<void> {

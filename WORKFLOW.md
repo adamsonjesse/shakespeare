@@ -270,10 +270,10 @@ milestone the user has asked for.
 
 ### Next milestone
 
-Milestone 6, Hybrid transport and hub skeleton, is the next eligible milestone.
-Its plan is [docs/planned/milestone-06-hybrid-transport.md](docs/planned/milestone-06-hybrid-transport.md).
+Milestone 7, Learned ranking, is the next eligible milestone.
+Its plan is [docs/planned/milestone-07-learned-ranking.md](docs/planned/milestone-07-learned-ranking.md).
 It has not started. The order is in `docs/planned/WORK_PLAN.md`.
-Do not start Milestone 6, or any later milestone, unless the user asks.
+Do not start Milestone 7, or any later milestone, unless the user asks.
 
 ## Engineering rules
 

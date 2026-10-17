@@ -13,6 +13,7 @@
     "lint": "eslint .",
     "build:web": "pnpm --filter @shakespeare/desktop build:web",
     "build:desktop": "pnpm --filter @shakespeare/desktop build",
+    "hub": "node --experimental-strip-types packages/core/src/hub-cli.ts",
     "cap:sync": "pnpm build:web && pnpm --filter @shakespeare/mobile exec cap sync"
   },
   "devDependencies": {

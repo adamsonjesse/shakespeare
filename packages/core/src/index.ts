@@ -61,3 +61,13 @@ export {
   parseManifest,
 } from "./files.ts";
 export type { BlobStore, FolderManifest, ManifestFile, OutputStore } from "./files.ts";
+export {
+  RelayError,
+  enqueueOutbox,
+  flushOutbox,
+  listPendingOutbox,
+  readRelayResponse,
+  settleLocalOutbox,
+  syncWithHub,
+} from "./relay.ts";
+export type { RelayResponse } from "./relay.ts";

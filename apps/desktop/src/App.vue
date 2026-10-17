@@ -36,6 +36,8 @@ const replyParentId = ref("");
 const hiddenOrigin = ref<"human" | "ai" | null>(null);
 const offerPath = ref("");
 const offerLabel = ref("notes");
+const hubHost = ref("127.0.0.1");
+const hubPort = ref("");
 const clubName = ref("");
 const inviteHours = ref(24);
 const oneTime = ref(false);
@@ -64,6 +66,7 @@ globalThis.addEventListener("shakespeare-post-ai", (event) => {
       ? detail.body
       : "";
   void run(async () => {
+    rememberHub();
     await session.postToolMessage(selectedClubId.value, body, new Date().toISOString());
     await refreshClubs();
     status.value = "AI message posted.";
@@ -224,8 +227,27 @@ function selectClub(clubId: string): void {
   });
 }
 
+function rememberHub(): void {
+  const text = hubPort.value.trim();
+  if (text.length === 0) {
+    session.configureHub(null, null);
+    return;
+  }
+  session.configureHub(hubHost.value.trim(), Number(text));
+}
+
+function syncHub(): void {
+  void run(async () => {
+    rememberHub();
+    await session.syncHub(new Date().toISOString());
+    await refreshClubs();
+    status.value = "Hub synced.";
+  });
+}
+
 function sendMessage(): void {
   void run(async () => {
+    rememberHub();
     const now = new Date().toISOString();
     await session.sendMessage(selectedClubId.value, messageBody.value, now, replyParentId.value || null);
     messageBody.value = "";
@@ -253,6 +275,7 @@ function bookmarkMessage(eventId: string): void {
 
 function offerFolder(): void {
   void run(async () => {
+    rememberHub();
     await session.offerFolder(selectedClubId.value, offerPath.value, offerLabel.value, new Date().toISOString());
     offerPath.value = "";
     await refreshClubs();
@@ -648,6 +671,44 @@ function acceptInvite(): void {
         @click="replyParentId = ''"
       >
         Cancel reply
+      </button>
+      <h2 class="text-lg font-semibold">
+        Hub
+      </h2>
+      <label
+        class="flex flex-col gap-1 text-sm"
+        for="hub-host"
+      >
+        Hub address
+        <input
+          id="hub-host"
+          v-model="hubHost"
+          data-testid="hub-host"
+          class="rounded border border-stone-300 px-3 py-2"
+          type="text"
+        >
+      </label>
+      <label
+        class="flex flex-col gap-1 text-sm"
+        for="hub-port"
+      >
+        Hub port
+        <input
+          id="hub-port"
+          v-model="hubPort"
+          data-testid="hub-port"
+          class="rounded border border-stone-300 px-3 py-2"
+          type="text"
+        >
+      </label>
+      <button
+        type="button"
+        data-testid="hub-sync"
+        class="w-fit rounded bg-stone-900 px-3 py-2 text-white disabled:opacity-50"
+        :disabled="busy"
+        @click="syncHub"
+      >
+        Sync hub
       </button>
       <label
         class="flex flex-col gap-1 text-sm"

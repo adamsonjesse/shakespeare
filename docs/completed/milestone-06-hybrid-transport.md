@@ -1,9 +1,9 @@
 # Milestone 6: Hybrid transport and hub skeleton
 
-**Status:** planned
-**Index:** [WORK_PLAN.md](WORK_PLAN.md)
-**Depends on:** [Milestone 2](../completed/milestone-02-signed-events.md) and [Milestone 5](../completed/milestone-05-voluntary-files.md)
-**Blocks:** [Milestone 7](milestone-07-learned-ranking.md), [Milestone 9](milestone-09-mobile.md), [Milestone 10](milestone-10-security-docs.md), and [Milestone 11](milestone-11-hub-limits.md)
+**Status:** completed
+**Index:** [WORK_PLAN.md](../planned/WORK_PLAN.md)
+**Depends on:** [Milestone 2](milestone-02-signed-events.md) and [Milestone 5](milestone-05-voluntary-files.md)
+**Blocks:** [Milestone 7](../planned/milestone-07-learned-ranking.md), [Milestone 9](../planned/milestone-09-mobile.md), [Milestone 10](../planned/milestone-10-security-docs.md), and [Milestone 11](../planned/milestone-11-hub-limits.md)
 
 ## Outcome
 
@@ -73,3 +73,7 @@ This is a same-agent review, not an independent review.
 - The hub stores envelopes and voluntarily seeded blobs only. Clients verify signatures before display.
 - The hub does not download files by itself.
 - The event format stays as milestone 2 defined it.
+
+## Result
+
+The peer channel is a length-prefixed JSON socket on 127.0.0.1, the same local socket style as milestone 5. Iroh is not a dependency. Direct delivery works with the hub stopped. `pnpm hub -- <directory> <port>` runs the hub. It stores the opaque envelope, including key wraps, and does not decrypt. Same-computer profiles still deliver by opening the local profile database when no hub is set.

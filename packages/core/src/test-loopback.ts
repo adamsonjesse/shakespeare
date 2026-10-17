@@ -1,6 +1,6 @@
 /**
  * In-memory test double that carries acceptance envelopes between profiles.
- * Milestone 6 replaces this. It is not the product transport.
+ * Invite tests still use this harness. Club events use the local relay.
  */
 export class TestLoopback {
   private readonly queues = new Map<string, string[]>();

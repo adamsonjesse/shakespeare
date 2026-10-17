@@ -16,6 +16,11 @@ Read marks and bookmarks stay on that profile. A composed message is tagged
 Human. A local post tool tags the same identity as AI, and the stream can
 hide either tag. A member can offer a folder. Another member sees the names
 and sizes only, then downloads the files they choose. A bad hash is rejected.
+Two profiles on one computer exchange club events directly. A local hub can
+hold ciphertext while the other person is offline. Run it with
+`pnpm hub -- <directory> <port>`, then point the desktop hub fields at
+`127.0.0.1` and that port. The hub stores envelopes and blobs a member
+explicitly seeds. It does not read message bodies.
 
 ## Prerequisites
 
@@ -41,6 +46,7 @@ Run these from the repository root after `pnpm install`.
 | `pnpm build:web` | Build the shared Vue app |
 | `pnpm cap:sync` | Rebuild the web app and update the Capacitor Android project |
 | `pnpm build:desktop` | Build the desktop bundle |
+| `pnpm hub -- <directory> <port>` | Run the local store-and-forward hub |
 
 ## Layout
 

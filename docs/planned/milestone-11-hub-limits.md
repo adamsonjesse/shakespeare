@@ -2,7 +2,7 @@
 
 **Status:** planned
 **Index:** [WORK_PLAN.md](WORK_PLAN.md)
-**Depends on:** [Milestone 6](milestone-06-hybrid-transport.md) and [Milestone 10](milestone-10-security-docs.md)
+**Depends on:** [Milestone 6](../completed/milestone-06-hybrid-transport.md) and [Milestone 10](milestone-10-security-docs.md)
 **Blocks:** none
 
 This milestone is optional. Do not start it while an earlier plan is in `docs/in-progress/`, and do not pull its work forward.

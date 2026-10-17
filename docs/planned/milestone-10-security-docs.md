@@ -2,7 +2,7 @@
 
 **Status:** planned
 **Index:** [WORK_PLAN.md](WORK_PLAN.md)
-**Depends on:** [Milestone 6](milestone-06-hybrid-transport.md), [Milestone 8](milestone-08-mcp-cli.md), and [Milestone 9](milestone-09-mobile.md)
+**Depends on:** [Milestone 6](../completed/milestone-06-hybrid-transport.md), [Milestone 8](milestone-08-mcp-cli.md), and [Milestone 9](milestone-09-mobile.md)
 **Blocks:** [Milestone 11](milestone-11-hub-limits.md)
 
 ## Outcome
