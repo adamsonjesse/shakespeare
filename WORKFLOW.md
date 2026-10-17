@@ -11,9 +11,8 @@ described in the plan is already built.
   engineering standards, validation, standing PAVER commit and push authority,
   and the invariants every milestone must keep.
 - [docs/planned/WORK_PLAN.md](docs/planned/WORK_PLAN.md) is the milestone
-  index: order, status, and links. Each milestone also has its own plan file.
-  Until a milestone is split into that file, its section in the index is the
-  plan. Update the index when the work diverges from the plan.
+  index: order, status, and links. Each milestone has its own plan file beside
+  that index. Update the index when the work diverges from the plan.
 - `docs/references/` holds research and architecture notes:
   `architecture-deep-dive.md`, `business-model-analysis.md`,
   `decentralized-pivot-analysis.md`, and
@@ -271,8 +270,9 @@ milestone the user has asked for.
 
 ### Next milestone
 
-Milestone 0, Project Foundation & Tooling, is the next eligible milestone.
-It has not started. The dependency order is in `docs/planned/WORK_PLAN.md`.
+Milestone 0, Foundation and tooling, is the next eligible milestone.
+Its plan is [docs/planned/milestone-00-foundation.md](docs/planned/milestone-00-foundation.md).
+It has not started. The order is in `docs/planned/WORK_PLAN.md`.
 Do not start Milestone 0, or any later milestone, unless the user asks.
 
 ## Engineering rules
