@@ -1,9 +1,9 @@
 # Milestone 7: Learned ranking
 
-**Status:** planned
-**Index:** [WORK_PLAN.md](WORK_PLAN.md)
-**Depends on:** [Milestone 3](../completed/milestone-03-stream-ranking.md) and [Milestone 6](../completed/milestone-06-hybrid-transport.md)
-**Blocks:** [Milestone 8](milestone-08-mcp-cli.md)
+**Status:** completed
+**Index:** [WORK_PLAN.md](../planned/WORK_PLAN.md)
+**Depends on:** [Milestone 3](milestone-03-stream-ranking.md) and [Milestone 6](milestone-06-hybrid-transport.md)
+**Blocks:** [Milestone 8](../planned/milestone-08-mcp-cli.md)
 
 ## Outcome
 
@@ -68,3 +68,7 @@ This is a same-agent review, not an independent review.
 - The behavior check is a named fixture with an expected order.
 - Local weights are the product. Hub assist is off by default and carries theme ids and weights only.
 - The assist request has an allowlist. The test rejects any other field.
+
+## Result
+
+A bookmark, a reply, or a read that lasts at least two seconds adds one to each matching theme weight on that profile. Empty weights keep the milestone 3 order. Assist is off unless the member checks Publish theme weights. The hub then stores theme ids and integer weights for that public key only.

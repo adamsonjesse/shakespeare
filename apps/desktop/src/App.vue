@@ -13,6 +13,7 @@ import {
   type Club,
   type Member,
   type ReadableMessage,
+  matchingThemeIds,
   parseManifest,
   type Theme,
 } from "@shakespeare/core";
@@ -31,6 +32,8 @@ const themeName = ref("");
 const themeTerms = ref("");
 const readIds = ref<string[]>([]);
 const bookmarkIds = ref<string[]>([]);
+const weights = ref<Record<string, number>>({});
+const assist = ref(false);
 const catchUp = ref(false);
 const replyParentId = ref("");
 const hiddenOrigin = ref<"human" | "ai" | null>(null);
@@ -121,28 +124,31 @@ const streamRows = computed(() => {
     id: message.id,
     parentId: message.parentId ?? null,
     createdAt: message.createdAt ?? "",
+    themeIds: message.body ? matchingThemeIds(message.body, themes.value) : [],
     matchesTheme: terms !== null && message.body !== undefined && textMatchesTheme(message.body, terms),
     read: read.has(message.id),
     bookmarked: bookmarks.has(message.id),
   }));
   const now = new Date().toISOString();
   if (catchUp.value) {
-    return catchUpItems(items, now, RECENCY_HALF_LIFE_MS).map((item) => ({
+    return catchUpItems(items, now, RECENCY_HALF_LIFE_MS, weights.value).map((item) => ({
       item,
       indent: item.parentId === null ? 0 as const : 1 as const,
     }));
   }
-  return threadMessages(items, now, RECENCY_HALF_LIFE_MS);
+  return threadMessages(items, now, RECENCY_HALF_LIFE_MS, weights.value);
 });
 
 async function refreshClubs(): Promise<void> {
   clubs.value = await session.listClubs();
   if (currentPublicKey.value) {
     themes.value = await session.themes();
+    weights.value = await session.themeWeights();
     readIds.value = await session.readIds();
     bookmarkIds.value = await session.bookmarkIds();
   } else {
     themes.value = [];
+    weights.value = {};
     readIds.value = [];
     bookmarkIds.value = [];
   }
@@ -228,6 +234,7 @@ function selectClub(clubId: string): void {
 }
 
 function rememberHub(): void {
+  session.setAssist(assist.value);
   const text = hubPort.value.trim();
   if (text.length === 0) {
     session.configureHub(null, null);
@@ -710,6 +717,14 @@ function acceptInvite(): void {
       >
         Sync hub
       </button>
+      <label class="flex items-center gap-2 text-sm">
+        <input
+          v-model="assist"
+          data-testid="assist-toggle"
+          type="checkbox"
+        >
+        Publish theme weights
+      </label>
       <label
         class="flex flex-col gap-1 text-sm"
         for="offer-path"

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyTheme, rankItems, threadMessages } from "./rank.ts";
+import { applyTheme, assistPayload, mergeWeights, rankItems, readWeightDelta, threadMessages } from "./rank.ts";
 
 const HALF_LIFE_MS = 60 * 60 * 1000;
 const NOW = "2099-01-01T10:00:00.000Z";
@@ -84,5 +84,52 @@ describe("rankItems", () => {
     ];
     expect(applyTheme(messages, ["Runway"]).map((message) => message.id)).toEqual(["a"]);
     expect(applyTheme(messages, null).map((message) => message.id)).toEqual(["a", "b", "c"]);
+  });
+
+  it("keeps the milestone 3 order when theme weights are empty", () => {
+    const createdAt = NOW;
+    const items = [
+      { id: "b", createdAt, matchesTheme: false, themeIds: ["theme-b"] },
+      { id: "m", createdAt, matchesTheme: false, themeIds: ["theme-a"] },
+    ];
+    expect(rankItems(items, NOW, HALF_LIFE_MS).map((item) => item.id)).toEqual(["b", "m"]);
+    expect(rankItems(items, NOW, HALF_LIFE_MS, {}).map((item) => item.id)).toEqual(["b", "m"]);
+  });
+
+  it("lifts an equally recent theme A item above theme B after a bookmark weight", () => {
+    const createdAt = NOW;
+    const items = [
+      { id: "b", createdAt, matchesTheme: false, themeIds: ["theme-b"] },
+      { id: "m", createdAt, matchesTheme: false, themeIds: ["theme-a"] },
+    ];
+    expect(rankItems(items, NOW, HALF_LIFE_MS, {}).map((item) => item.id)).toEqual(["b", "m"]);
+    expect(rankItems(items, NOW, HALF_LIFE_MS, { "theme-a": 1 }).map((item) => item.id)).toEqual(["m", "b"]);
+  });
+
+  it("produces that weighted order while no hub process is running", () => {
+    const createdAt = NOW;
+    const items = [
+      { id: "b", createdAt, matchesTheme: false, themeIds: ["theme-b"] },
+      { id: "m", createdAt, matchesTheme: false, themeIds: ["theme-a"] },
+    ];
+    expect(rankItems(items, NOW, HALF_LIFE_MS, { "theme-a": 1 }).map((item) => item.id)).toEqual(["m", "b"]);
+  });
+
+  it("ignores a read shorter than the dwell and counts a read that reaches it", () => {
+    expect(readWeightDelta("2099-01-01T10:00:00.000Z", "2099-01-01T10:00:01.999Z")).toBe(0);
+    expect(readWeightDelta("2099-01-01T10:00:00.000Z", "2099-01-01T10:00:02.000Z")).toBe(1);
+  });
+
+  it("keeps assist off from changing weights and drops message text from the payload", () => {
+    const remote = [{ themeId: "theme-a", weight: 1, body: "hello club" }];
+    expect(mergeWeights({}, remote, false)).toEqual({});
+    expect(mergeWeights({}, remote, true)).toEqual({ "theme-a": 1 });
+    const payload = assistPayload("alice", remote);
+    expect(JSON.stringify(payload).includes("hello club")).toBe(false);
+    expect(payload).toEqual({
+      op: "publish-weights",
+      publicKey: "alice",
+      weights: [{ themeId: "theme-a", weight: 1 }],
+    });
   });
 });

@@ -305,4 +305,29 @@ describe("local profiles", () => {
       close();
     }
   });
+
+  it("raises a theme weight after a bookmark and leaves another profile unchanged", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "shakespeare-session-rank-"));
+    directories.push(dir);
+    const { host, close } = createHost(dir);
+    try {
+      const session = createSession(host);
+      const alice = await session.createProfile(NOW);
+      const clubId = await session.createClub("Alpha", NOW);
+      await session.saveTheme("Alpha", ["alpha"]);
+      const theme = (await session.themes())[0];
+      if (!theme) throw new Error("missing theme");
+      await session.sendMessage(clubId, "alpha note", NOW);
+      const message = (await session.messages(clubId))[0];
+      if (!message) throw new Error("missing message");
+      await session.bookmark(message.id, NOW);
+      expect(await session.themeWeights()).toEqual({ [theme.id]: 1 });
+      await session.createProfile(LATER);
+      expect(await session.themeWeights()).toEqual({});
+      await session.openProfile(alice, LATER);
+      expect(await session.themeWeights()).toEqual({ [theme.id]: 1 });
+    } finally {
+      close();
+    }
+  });
 });

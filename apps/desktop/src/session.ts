@@ -23,10 +23,18 @@ import {
   MembershipError,
   migrate,
   MIGRATIONS,
+  bumpThemeWeights,
+  listThemeWeights,
+  matchingThemeIds,
+  MessageError,
   postMessage,
+  readMessage,
   readRelayResponse,
+  readWeightDelta,
   RelayError,
   runPostMessageCli,
+  signedWeightFetch,
+  signedWeightPublish,
   saveTheme as storeTheme,
   prepareAcceptance,
   readInvite,
@@ -73,8 +81,10 @@ export interface Session {
   sendMessage(clubId: string, body: string, now: string, parentId?: string | null): Promise<void>;
   postToolMessage(clubId: string, body: string, now: string): Promise<void>;
   messages(clubId: string): Promise<ReadableMessage[]>;
-  markRead(eventId: string, now: string): Promise<void>;
+  markRead(eventId: string, now: string, startedAt?: string | null): Promise<void>;
   bookmark(eventId: string, now: string): Promise<void>;
+  themeWeights(): Promise<Record<string, number>>;
+  setAssist(enabled: boolean): void;
   readIds(): Promise<string[]>;
   bookmarkIds(): Promise<string[]>;
   saveTheme(name: string, terms: readonly string[]): Promise<void>;
@@ -97,6 +107,23 @@ export function createSession(host: ProfileHost): Session {
   let current: Identity | null = null;
   let database: SqlExecutor | null = null;
   let hubAddress: { host: string; port: number } | null = null;
+  let assist = false;
+
+  async function learnFromBody(body: string, now: string): Promise<void> {
+    const active = requireOpen();
+    const themes = await listThemes(active.database);
+    await bumpThemeWeights(active.database, matchingThemeIds(body, themes), now);
+  }
+
+  async function learnFromEvent(eventId: string, now: string): Promise<void> {
+    const active = requireOpen();
+    try {
+      const message = await readMessage(active.database, active.identity.privateKey, eventId);
+      if (message.body) await learnFromBody(message.body, now);
+    } catch (error) {
+      if (!(error instanceof MessageError)) throw error;
+    }
+  }
 
   async function callHub(request: unknown): Promise<RelayResponse> {
     if (!hubAddress) throw new RelayError("unreachable");
@@ -269,6 +296,7 @@ export function createSession(host: ProfileHost): Session {
         origin: "human",
         parentId,
       });
+      if (parentId) await learnFromEvent(parentId, now);
       await publish(clubId, now, posted);
     },
 
@@ -288,12 +316,22 @@ export function createSession(host: ProfileHost): Session {
       return selectMessageList(active.database, active.identity.privateKey, clubId);
     },
 
-    async markRead(eventId: string, now: string): Promise<void> {
+    async markRead(eventId: string, now: string, startedAt: string | null = null): Promise<void> {
       await storeRead(requireOpen().database, eventId, now);
+      if (startedAt && readWeightDelta(startedAt, now) > 0) await learnFromEvent(eventId, now);
     },
 
     async bookmark(eventId: string, now: string): Promise<void> {
       await addBookmark(requireOpen().database, eventId, now);
+      await learnFromEvent(eventId, now);
+    },
+
+    async themeWeights(): Promise<Record<string, number>> {
+      return listThemeWeights(requireOpen().database);
+    },
+
+    setAssist(enabled: boolean): void {
+      assist = enabled;
     },
 
     async readIds(): Promise<string[]> {
@@ -350,6 +388,13 @@ export function createSession(host: ProfileHost): Session {
         now,
         call: (request) => callHub(request),
       });
+      if (!assist) return;
+      const weights = await listThemeWeights(active.database);
+      const rows = Object.entries(weights).map(([themeId, weight]) => ({ themeId, weight }));
+      const published = await callHub(signedWeightPublish(active.identity, rows));
+      if (!published.ok) throw new RelayError("forbidden");
+      const fetched = await callHub(signedWeightFetch(active.identity));
+      if (!fetched.ok) throw new RelayError("forbidden");
     },
 
     async downloadShared(eventId: string, path: string, seederPublicKey: string, now: string): Promise<void> {

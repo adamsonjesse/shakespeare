@@ -84,6 +84,30 @@ export async function listThemes(db: SqlExecutor): Promise<Theme[]> {
   }));
 }
 
+export async function listThemeWeights(db: SqlExecutor): Promise<Record<string, number>> {
+  const rows = await db.select<{ theme_id: string; weight: number }>(
+    "SELECT theme_id, weight FROM theme_weights",
+  );
+  const weights: Record<string, number> = {};
+  for (const row of rows) weights[row.theme_id] = row.weight;
+  return weights;
+}
+
+export async function bumpThemeWeights(
+  db: SqlExecutor,
+  themeIds: readonly string[],
+  now: string,
+): Promise<void> {
+  for (const themeId of themeIds) {
+    if (!isThemeId(themeId)) continue;
+    await db.execute(
+      `INSERT INTO theme_weights (theme_id, weight, updated_at) VALUES (?, 1, ?)
+       ON CONFLICT(theme_id) DO UPDATE SET weight = weight + 1, updated_at = excluded.updated_at`,
+      [themeId, now],
+    );
+  }
+}
+
 function parseTerms(stored: string): string[] {
   try {
     const parsed = JSON.parse(stored) as unknown;

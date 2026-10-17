@@ -42,7 +42,7 @@ The original list allowed milestones 4 and 5 to overlap after milestone 2. That 
 | 4 | [Human and AI tagging](../completed/milestone-04-ai-tagging.md) | completed | 3 |
 | 5 | [Voluntary file sharing](../completed/milestone-05-voluntary-files.md) | completed | 2, 3 |
 | 6 | [Hybrid transport and hub skeleton](../completed/milestone-06-hybrid-transport.md) | completed | 2, 5 |
-| 7 | [Learned ranking](milestone-07-learned-ranking.md) | planned | 3, 6 |
+| 7 | [Learned ranking](../completed/milestone-07-learned-ranking.md) | completed | 3, 6 |
 | 8 | [MCP and CLI parity](milestone-08-mcp-cli.md) | planned | 4, 5, 7 |
 | 9 | [Mobile completion](milestone-09-mobile.md) | planned | 0, 5, 6, 8 |
 | 10 | [Security hardening and docs](milestone-10-security-docs.md) | planned | 6, 8, 9 |

@@ -20,7 +20,11 @@ Two profiles on one computer exchange club events directly. A local hub can
 hold ciphertext while the other person is offline. Run it with
 `pnpm hub -- <directory> <port>`, then point the desktop hub fields at
 `127.0.0.1` and that port. The hub stores envelopes and blobs a member
-explicitly seeds. It does not read message bodies.
+explicitly seeds. It does not read message bodies. Bookmarking, replying, or
+reading a message for at least two seconds raises the weight of themes that
+match it, and catch-up uses those weights. Publishing weights to the hub is
+off unless the member opts in, and that publish contains theme ids and
+numbers only.
 
 ## Prerequisites
 

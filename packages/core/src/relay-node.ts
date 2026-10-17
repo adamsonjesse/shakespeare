@@ -33,6 +33,12 @@ CREATE TABLE IF NOT EXISTS hub_blobs (
   bytes BLOB NOT NULL,
   size INTEGER NOT NULL
 );
+CREATE TABLE IF NOT EXISTS published_weights (
+  public_key TEXT NOT NULL,
+  theme_id TEXT NOT NULL,
+  weight INTEGER NOT NULL,
+  PRIMARY KEY (public_key, theme_id)
+);
 `;
 
 export async function startHub(
@@ -160,6 +166,26 @@ function hubDb(db: DatabaseSync): HubDb {
         bytes,
         bytes.byteLength,
       );
+    },
+    async replaceWeights(publicKey, weights): Promise<void> {
+      db.exec("BEGIN");
+      try {
+        db.prepare("DELETE FROM published_weights WHERE public_key = ?").run(publicKey);
+        const insert = db.prepare(
+          "INSERT INTO published_weights (public_key, theme_id, weight) VALUES (?, ?, ?)",
+        );
+        for (const row of weights) insert.run(publicKey, row.themeId, row.weight);
+        db.exec("COMMIT");
+      } catch (error) {
+        db.exec("ROLLBACK");
+        throw error;
+      }
+    },
+    async listWeights(publicKey: string) {
+      const rows = db.prepare(
+        "SELECT theme_id, weight FROM published_weights WHERE public_key = ? ORDER BY theme_id",
+      ).all(publicKey) as { theme_id: string; weight: number }[];
+      return rows.map((row) => ({ themeId: row.theme_id, weight: row.weight }));
     },
   };
 }

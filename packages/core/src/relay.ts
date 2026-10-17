@@ -4,6 +4,7 @@ import { bytesToHex, hexToBytes } from "@noble/hashes/utils.js";
 import { importEnvelope } from "./events.ts";
 import { isClubId, isPublicKey, isTimestamp, signText, verifyQuiet } from "./invite.ts";
 import { listClubs, listMembers } from "./membership.ts";
+import { assistPayload, type AssistWeight } from "./rank.ts";
 import type { SqlExecutor } from "./storage.ts";
 
 /**
@@ -36,7 +37,7 @@ export class RelayError extends Error {
 }
 
 export type RelayResponse =
-  | { readonly ok: true; readonly envelopes?: readonly string[] }
+  | { readonly ok: true; readonly envelopes?: readonly string[]; readonly weights?: readonly AssistWeight[] }
   | { readonly ok: false; readonly error: string };
 
 export interface HubDb {
@@ -51,6 +52,8 @@ export interface HubDb {
   }): Promise<void>;
   listEnvelopes(clubId: string): Promise<readonly { readonly eventId: string; readonly envelope: string }[]>;
   saveBlob(hash: string, bytes: Uint8Array): Promise<void>;
+  replaceWeights(publicKey: string, weights: readonly AssistWeight[]): Promise<void>;
+  listWeights(publicKey: string): Promise<readonly AssistWeight[]>;
 }
 
 export function hubCreateMessage(clubId: string, creatorPublicKey: string): string {
@@ -73,6 +76,36 @@ export function hubSeedMessage(clubId: string, hash: string): string {
   return `shakespeare-hub-v1\nseed\n${clubId}\n${hash}`;
 }
 
+export function hubWeightsMessage(publicKey: string, weights: readonly AssistWeight[]): string {
+  const body = weights.map((row) => `${row.themeId} ${row.weight}`).join("\n");
+  return `shakespeare-hub-v1\nweights\n${publicKey}\n${body}`;
+}
+
+export function hubFetchWeightsMessage(publicKey: string): string {
+  return `shakespeare-hub-v1\nfetch-weights\n${publicKey}`;
+}
+
+export function signedWeightPublish(
+  author: { readonly publicKey: string; readonly privateKey: Uint8Array },
+  weights: readonly { readonly themeId: string; readonly weight: number; readonly body?: string }[],
+): { readonly op: "publish-weights"; readonly publicKey: string; readonly weights: AssistWeight[]; readonly signature: string } {
+  const payload = assistPayload(author.publicKey, weights);
+  return {
+    ...payload,
+    signature: signText(author.privateKey, hubWeightsMessage(author.publicKey, payload.weights)),
+  };
+}
+
+export function signedWeightFetch(
+  author: { readonly publicKey: string; readonly privateKey: Uint8Array },
+): { readonly op: "fetch-weights"; readonly publicKey: string; readonly signature: string } {
+  return {
+    op: "fetch-weights",
+    publicKey: author.publicKey,
+    signature: signText(author.privateKey, hubFetchWeightsMessage(author.publicKey)),
+  };
+}
+
 export function encodeFrame(payload: string): Uint8Array {
   const body = new TextEncoder().encode(payload);
   if (body.length > MAX_FRAME) throw new RelayError("forbidden");
@@ -85,11 +118,24 @@ export function encodeFrame(payload: string): Uint8Array {
 export function readRelayResponse(value: unknown): RelayResponse {
   if (!isRecord(value) || typeof value.ok !== "boolean") return forbiddenResponse();
   if (value.ok) {
-    if (value.envelopes === undefined) return { ok: true };
-    if (!Array.isArray(value.envelopes) || value.envelopes.some((entry) => typeof entry !== "string")) {
-      return forbiddenResponse();
+    const response: { ok: true; envelopes?: readonly string[]; weights?: readonly AssistWeight[] } = { ok: true };
+    if (value.envelopes !== undefined) {
+      if (!Array.isArray(value.envelopes) || value.envelopes.some((entry) => typeof entry !== "string")) {
+        return forbiddenResponse();
+      }
+      response.envelopes = value.envelopes;
     }
-    return { ok: true, envelopes: value.envelopes };
+    if (value.weights !== undefined) {
+      if (!Array.isArray(value.weights)) return forbiddenResponse();
+      const weights: AssistWeight[] = [];
+      for (const row of value.weights) {
+        if (!isRecord(row) || typeof row.themeId !== "string" || typeof row.weight !== "number") return forbiddenResponse();
+        if (Object.keys(row).some((key) => key !== "themeId" && key !== "weight")) return forbiddenResponse();
+        weights.push({ themeId: row.themeId, weight: row.weight });
+      }
+      response.weights = weights;
+    }
+    return response;
   }
   if (typeof value.error !== "string" || !allowedError(value.error)) return forbiddenResponse();
   return { ok: false, error: value.error };
@@ -102,6 +148,8 @@ export async function handleHubRequest(db: HubDb, request: unknown, now: string)
   if (request.op === "submit-envelope") return submitEnvelope(db, request, now);
   if (request.op === "catch-up") return catchUp(db, request, now);
   if (request.op === "seed-blob") return seedBlob(db, request);
+  if (request.op === "publish-weights") return publishWeights(db, request);
+  if (request.op === "fetch-weights") return fetchWeights(db, request);
   return forbiddenResponse();
 }
 
@@ -304,6 +352,30 @@ async function catchUp(db: HubDb, request: Record<string, unknown>, hubNow: stri
   return { ok: true, envelopes: selected.map((row) => row.envelope) };
 }
 
+async function publishWeights(db: HubDb, request: Record<string, unknown>): Promise<RelayResponse> {
+  const publicKey = request.publicKey;
+  const signature = request.signature;
+  if (!isPublicKey(publicKey) || typeof signature !== "string" || !Array.isArray(request.weights)) {
+    return forbiddenResponse();
+  }
+  const rows = request.weights.filter(isRecord).map((row) => ({
+    themeId: typeof row.themeId === "string" ? row.themeId : "",
+    weight: typeof row.weight === "number" ? row.weight : Number.NaN,
+  }));
+  const weights = assistPayload(publicKey, rows).weights;
+  if (!verifyQuiet(signature, hubWeightsMessage(publicKey, weights), publicKey)) return forbiddenResponse();
+  await db.replaceWeights(publicKey, weights);
+  return { ok: true };
+}
+
+async function fetchWeights(db: HubDb, request: Record<string, unknown>): Promise<RelayResponse> {
+  const publicKey = request.publicKey;
+  const signature = request.signature;
+  if (!isPublicKey(publicKey) || typeof signature !== "string") return forbiddenResponse();
+  if (!verifyQuiet(signature, hubFetchWeightsMessage(publicKey), publicKey)) return forbiddenResponse();
+  return { ok: true, weights: await db.listWeights(publicKey) };
+}
+
 async function seedBlob(db: HubDb, request: Record<string, unknown>): Promise<RelayResponse> {
   const clubId = request.clubId;
   const memberPublicKey = request.memberPublicKey;
@@ -366,7 +438,9 @@ function withinWindow(requestNow: string, hubNow: string): boolean {
   return Math.abs(Date.parse(requestNow) - Date.parse(hubNow)) <= SKEW_MS;
 }
 
-function assertOk(response: RelayResponse): asserts response is { readonly ok: true; readonly envelopes?: readonly string[] } {
+function assertOk(
+  response: RelayResponse,
+): asserts response is { readonly ok: true; readonly envelopes?: readonly string[]; readonly weights?: readonly AssistWeight[] } {
   if (response.ok) return;
   if (response.error === RELAY_MESSAGES.proof) throw new RelayError("proof");
   if (response.error === RELAY_MESSAGES.rejected) throw new RelayError("rejected");

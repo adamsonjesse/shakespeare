@@ -32,14 +32,19 @@ export {
 export type { PostedMessage, ReadableMessage } from "./events.ts";
 export {
   applyTheme,
+  assistPayload,
   catchUpItems,
   excludeOrigin,
+  matchingThemeIds,
+  mergeWeights,
   rankItems,
+  READ_DWELL_MS,
+  readWeightDelta,
   RECENCY_HALF_LIFE_MS,
   textMatchesTheme,
   threadMessages,
 } from "./rank.ts";
-export type { RankInput, ThreadItem, ThreadRow } from "./rank.ts";
+export type { AssistWeight, RankInput, ThemeWeights, ThreadItem, ThreadRow } from "./rank.ts";
 export {
   addBookmark,
   listBookmarkIds,
@@ -47,6 +52,8 @@ export {
   listThemes,
   listUnreadIds,
   markRead,
+  bumpThemeWeights,
+  listThemeWeights,
   saveTheme,
   StreamError,
 } from "./stream.ts";
@@ -68,6 +75,8 @@ export {
   listPendingOutbox,
   readRelayResponse,
   settleLocalOutbox,
+  signedWeightFetch,
+  signedWeightPublish,
   syncWithHub,
 } from "./relay.ts";
 export type { RelayResponse } from "./relay.ts";

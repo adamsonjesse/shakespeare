@@ -117,4 +117,15 @@ export const MIGRATIONS: readonly Migration[] = [
       )`,
     ],
   },
+  {
+    version: 7,
+    statements: [
+      `CREATE TABLE theme_weights (
+        theme_id TEXT PRIMARY KEY NOT NULL,
+        weight INTEGER NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (theme_id) REFERENCES themes (id)
+      )`,
+    ],
+  },
 ];

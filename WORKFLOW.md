@@ -270,10 +270,10 @@ milestone the user has asked for.
 
 ### Next milestone
 
-Milestone 7, Learned ranking, is the next eligible milestone.
-Its plan is [docs/planned/milestone-07-learned-ranking.md](docs/planned/milestone-07-learned-ranking.md).
+Milestone 8, MCP and CLI parity, is the next eligible milestone.
+Its plan is [docs/planned/milestone-08-mcp-cli.md](docs/planned/milestone-08-mcp-cli.md).
 It has not started. The order is in `docs/planned/WORK_PLAN.md`.
-Do not start Milestone 7, or any later milestone, unless the user asks.
+Do not start Milestone 8, or any later milestone, unless the user asks.
 
 ## Engineering rules
 

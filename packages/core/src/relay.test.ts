@@ -22,6 +22,8 @@ import {
   hubSeedMessage,
   hubSubmitMessage,
   listPendingOutbox,
+  signedWeightFetch,
+  signedWeightPublish,
 } from "./relay.ts";
 import { exchange, startDirectPeer, startHub } from "./relay-node.ts";
 import type { SqlExecutor, SqlValue } from "./storage.ts";
@@ -333,6 +335,26 @@ describe("hybrid transport", () => {
       await new Promise<void>((resolve) => {
         child.once("exit", () => resolve());
       });
+    }
+  });
+
+  it("stores a published theme weight and not the message fixture", async () => {
+    const alice = await person();
+    const bob = await person();
+    const dir = await mkdtemp(join(tmpdir(), "shakespeare-hub-weights-"));
+    directories.push(dir);
+    const hub = await startHub(dir, { now: () => NOW });
+    try {
+      const request = signedWeightPublish(alice, [{ themeId: "theme-a", weight: 1, body: BODY }]);
+      expect(JSON.stringify(request).includes(BODY)).toBe(false);
+      expect(await exchange(hub.port, request)).toEqual({ ok: true });
+      const fetched = await exchange(hub.port, signedWeightFetch(alice));
+      expect(fetched).toEqual({ ok: true, weights: [{ themeId: "theme-a", weight: 1 }] });
+      const other = await exchange(hub.port, signedWeightFetch(bob));
+      expect(other).toEqual({ ok: true, weights: [] });
+      expect(readFileSync(hub.file).includes(Buffer.from(BODY))).toBe(false);
+    } finally {
+      await hub.close();
     }
   });
 });
