@@ -1,7 +1,7 @@
 # Milestone 0: Foundation and tooling
 
-**Status:** planned
-**Index:** [WORK_PLAN.md](WORK_PLAN.md)
+**Status:** completed
+**Index:** [WORK_PLAN.md](../planned/WORK_PLAN.md)
 **Depends on:** none
 **Blocks:** every later milestone
 

@@ -35,7 +35,7 @@ The original list allowed milestones 4 and 5 to overlap after milestone 2. That 
 
 | # | Plan | Status | Depends on |
 | --- | --- | --- | --- |
-| 0 | [Foundation and tooling](milestone-00-foundation.md) | planned | none |
+| 0 | [Foundation and tooling](../completed/milestone-00-foundation.md) | completed | none |
 | 1 | [Identity and invites](milestone-01-identity-invites.md) | planned | 0 |
 | 2 | [Signed events and local store](milestone-02-signed-events.md) | planned | 1 |
 | 3 | [Single stream, ranking, filters](milestone-03-stream-ranking.md) | planned | 2 |

@@ -1,0 +1,28 @@
+{
+  "name": "shakespeare",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.18.2",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @shakespeare/desktop dev",
+    "test": "vitest run",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "lint": "eslint .",
+    "build:web": "pnpm --filter @shakespeare/desktop build:web",
+    "build:desktop": "pnpm --filter @shakespeare/desktop build",
+    "cap:sync": "pnpm build:web && pnpm --filter @shakespeare/mobile exec cap sync"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "@types/node": "^24.10.0",
+    "eslint": "^9.39.0",
+    "eslint-plugin-vue": "^10.5.0",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.46.0",
+    "vitest": "^3.2.4",
+    "vue-eslint-parser": "^10.2.0"
+  }
+}
