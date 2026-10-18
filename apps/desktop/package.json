@@ -13,6 +13,7 @@
     "tauri": "tauri"
   },
   "dependencies": {
+    "@capacitor/core": "^8.5.3",
     "@shakespeare/core": "workspace:*",
     "@tauri-apps/api": "^2",
     "qrcode": "^1.5.4",

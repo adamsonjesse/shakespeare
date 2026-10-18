@@ -1,9 +1,9 @@
 # Milestone 9: Mobile completion
 
-**Status:** planned
-**Index:** [WORK_PLAN.md](WORK_PLAN.md)
-**Depends on:** [Milestone 0](../completed/milestone-00-foundation.md), [Milestone 5](../completed/milestone-05-voluntary-files.md), [Milestone 6](../completed/milestone-06-hybrid-transport.md), and [Milestone 8](../completed/milestone-08-mcp-cli.md)
-**Blocks:** [Milestone 10](milestone-10-security-docs.md)
+**Status:** completed
+**Index:** [WORK_PLAN.md](../planned/WORK_PLAN.md)
+**Depends on:** [Milestone 0](milestone-00-foundation.md), [Milestone 5](milestone-05-voluntary-files.md), [Milestone 6](milestone-06-hybrid-transport.md), and [Milestone 8](milestone-08-mcp-cli.md)
+**Blocks:** [Milestone 10](../planned/milestone-10-security-docs.md)
 
 ## Outcome
 
@@ -75,3 +75,11 @@ This is a same-agent review, not an independent review.
 - The milestone is not complete without the manual device checklist, honestly labeled.
 - Dependencies include file sharing, the hub, and the shared stream.
 - Seeding is required only while the app is open.
+
+## Result
+
+The shared Vue stream runs in the Capacitor Android shell. `Capacitor.isNativePlatform()` selects a local plugin for SQLite, sandbox files, and the hub socket. Desktop still uses the Tauri host. Private keys are hex files under the app files directory, outside `club.sqlite`. `android:allowBackup` is false. The hub process still listens only on `127.0.0.1`. The emulator reaches it through `10.0.2.2`.
+
+Push is omitted. There is no `google-services.json`, no Firebase dependency, and no notification registration. A static "new activity" payload was not added.
+
+`pnpm cap:sync` succeeded. `node apps/mobile/check-web-build.mjs` found `message-row`, `download-file`, `show-catch-up`, `filter-ai`, and `10.0.2.2` in the web bundle. The manual checklist passed on the `Medium_Phone_API_37.0` emulator: accept an invite, read catch-up, post a human message, confirm the download directory was empty, download one chosen file (`b.txt` only), force-stop, submit a message while the process was stopped, reopen, and see that message in catch-up. Assist stayed off. The hub file did not contain the message text.

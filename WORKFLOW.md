@@ -270,10 +270,10 @@ milestone the user has asked for.
 
 ### Next milestone
 
-Milestone 9, mobile completion, is the next eligible milestone.
-Its plan is [docs/planned/milestone-09-mobile.md](docs/planned/milestone-09-mobile.md).
+Milestone 10, security hardening and docs, is the next eligible milestone.
+Its plan is [docs/planned/milestone-10-security-docs.md](docs/planned/milestone-10-security-docs.md).
 It has not started. The order is in `docs/planned/WORK_PLAN.md`.
-Do not start Milestone 9, or any later milestone, unless the user asks.
+Do not start Milestone 10, or any later milestone, unless the user asks.
 
 ## Engineering rules
 

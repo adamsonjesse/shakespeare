@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
 import QRCode from "qrcode";
+import { Capacitor } from "@capacitor/core";
+import { createMobileHost } from "./mobile-host.ts";
 import { createSession } from "./session.ts";
 import { createTauriHost } from "./storage.ts";
 import {
@@ -18,7 +20,7 @@ import {
   type Theme,
 } from "@shakespeare/core";
 
-const session = createSession(createTauriHost());
+const session = createSession(Capacitor.isNativePlatform() ? createMobileHost() : createTauriHost());
 const profiles = ref<string[]>([]);
 const currentPublicKey = ref("");
 const clubs = ref<Club[]>([]);
@@ -344,7 +346,7 @@ function acceptInvite(): void {
 </script>
 
 <template>
-  <main class="mx-auto flex min-h-screen max-w-xl flex-col gap-8 px-6 py-10 text-stone-900">
+  <main class="mx-auto flex min-h-dvh w-full max-w-xl flex-col gap-6 px-4 py-6 text-stone-900">
     <header class="flex flex-col gap-2">
       <p class="text-sm font-medium uppercase tracking-wide text-stone-500">
         Shakespeare

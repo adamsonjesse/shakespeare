@@ -44,7 +44,7 @@ The original list allowed milestones 4 and 5 to overlap after milestone 2. That 
 | 6 | [Hybrid transport and hub skeleton](../completed/milestone-06-hybrid-transport.md) | completed | 2, 5 |
 | 7 | [Learned ranking](../completed/milestone-07-learned-ranking.md) | completed | 3, 6 |
 | 8 | [MCP and CLI parity](../completed/milestone-08-mcp-cli.md) | completed | 4, 5, 7 |
-| 9 | [Mobile completion](milestone-09-mobile.md) | planned | 0, 5, 6, 8 |
+| 9 | [Mobile completion](../completed/milestone-09-mobile.md) | completed | 0, 5, 6, 8 |
 | 10 | [Security hardening and docs](milestone-10-security-docs.md) | planned | 6, 8, 9 |
 | 11 | [Hub limits](milestone-11-hub-limits.md) | planned | 6, 10 |
 

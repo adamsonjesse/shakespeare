@@ -25,6 +25,15 @@ export default tseslint.config(
     },
   },
   {
+    files: ["apps/mobile/check-web-build.mjs"],
+    languageOptions: {
+      globals: {
+        console: "readonly",
+        process: "readonly",
+      },
+    },
+  },
+  {
     rules: {
       "vue/multi-word-component-names": "off",
     },

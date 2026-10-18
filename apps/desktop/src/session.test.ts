@@ -276,6 +276,8 @@ describe("local profiles", () => {
       const session = createSession(host);
       const alice = await session.createProfile(NOW);
       const clubId = await session.createClub("Alpha", NOW);
+      session.configureHub("10.0.2.2", 8787);
+      expect(() => session.configureHub("192.168.1.20", 8787)).toThrow(/not allowed/);
       session.configureHub("127.0.0.1", 8787);
       await session.sendMessage(clubId, "hello club", NOW);
       close();

@@ -1,1 +1,17 @@
 @import "tailwindcss";
+
+@media (max-width: 40rem) {
+  button,
+  input,
+  select {
+    min-height: 2.75rem;
+  }
+
+  textarea {
+    min-height: 6rem;
+  }
+
+  main {
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+  }
+}

@@ -373,7 +373,14 @@ export function createSession(host: ProfileHost): Session {
         hubAddress = null;
         return;
       }
-      if (hostName !== "127.0.0.1" || !Number.isInteger(port) || port < 1 || port > 65535) {
+      // 10.0.2.2 is the Android emulator's alias for the host loopback.
+      // The hub process still listens only on 127.0.0.1.
+      if (
+        (hostName !== "127.0.0.1" && hostName !== "10.0.2.2") ||
+        !Number.isInteger(port) ||
+        port < 1 ||
+        port > 65535
+      ) {
         throw new RelayError("forbidden");
       }
       hubAddress = { host: hostName, port };

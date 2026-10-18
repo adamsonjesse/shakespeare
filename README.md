@@ -63,7 +63,7 @@ Run these from the repository root after `pnpm install`.
 ## Layout
 
 - `apps/desktop` — Tauri 2, Vue 3, TypeScript, and Tailwind. This is the Vue source.
-- `apps/mobile` — Capacitor project. Its web assets come from `apps/desktop`.
+- `apps/mobile` — Capacitor Android shell for the same Vue app. Profile data stays in the app sandbox. Push is not registered.
 - `packages/core` — Shared types, identity, invites, encrypted messages, the storage interface, and the migration runner.
 
 `packages/core` does not import Tauri, Capacitor, or a Node SQLite driver.

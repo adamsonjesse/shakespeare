@@ -42,3 +42,4 @@ jobs:
           workspaces: apps/desktop/src-tauri -> target
       - run: pnpm install --frozen-lockfile
       - run: pnpm build:desktop
+      - run: node apps/mobile/check-web-build.mjs
