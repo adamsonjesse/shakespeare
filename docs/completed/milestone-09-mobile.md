@@ -3,7 +3,7 @@
 **Status:** completed
 **Index:** [WORK_PLAN.md](../planned/WORK_PLAN.md)
 **Depends on:** [Milestone 0](milestone-00-foundation.md), [Milestone 5](milestone-05-voluntary-files.md), [Milestone 6](milestone-06-hybrid-transport.md), and [Milestone 8](milestone-08-mcp-cli.md)
-**Blocks:** [Milestone 10](../planned/milestone-10-security-docs.md)
+**Blocks:** [Milestone 10](milestone-10-security-docs.md)
 
 ## Outcome
 

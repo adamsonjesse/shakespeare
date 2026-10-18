@@ -4,6 +4,13 @@ Desktop and mobile shell for an invite-only, end-to-end encrypted club app.
 The milestone index is [docs/planned/WORK_PLAN.md](docs/planned/WORK_PLAN.md).
 Agents follow [WORKFLOW.md](WORKFLOW.md).
 
+Security notes for this prototype:
+
+- [Threat model](docs/references/threat-model.md)
+- [Key management](docs/references/key-management.md)
+- [Self-host the hub](docs/references/self-host.md)
+- [Invites, tags, and downloads](docs/references/user-notes.md)
+
 The desktop app creates a local profile, stores that profile's private key in
 the OS keychain, and keeps a separate SQLite file per profile. A profile can
 create a club, copy an invite link, and show a QR code for the same link.

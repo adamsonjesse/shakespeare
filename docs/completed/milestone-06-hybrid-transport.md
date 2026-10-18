@@ -3,7 +3,7 @@
 **Status:** completed
 **Index:** [WORK_PLAN.md](../planned/WORK_PLAN.md)
 **Depends on:** [Milestone 2](milestone-02-signed-events.md) and [Milestone 5](milestone-05-voluntary-files.md)
-**Blocks:** [Milestone 7](milestone-07-learned-ranking.md), [Milestone 9](milestone-09-mobile.md), [Milestone 10](../planned/milestone-10-security-docs.md), and [Milestone 11](../planned/milestone-11-hub-limits.md)
+**Blocks:** [Milestone 7](milestone-07-learned-ranking.md), [Milestone 9](milestone-09-mobile.md), [Milestone 10](milestone-10-security-docs.md), and [Milestone 11](../planned/milestone-11-hub-limits.md)
 
 ## Outcome
 

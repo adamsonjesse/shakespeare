@@ -1,9 +1,9 @@
 # Milestone 10: Security hardening and documentation
 
-**Status:** planned
-**Index:** [WORK_PLAN.md](WORK_PLAN.md)
-**Depends on:** [Milestone 6](../completed/milestone-06-hybrid-transport.md), [Milestone 8](../completed/milestone-08-mcp-cli.md), and [Milestone 9](../completed/milestone-09-mobile.md)
-**Blocks:** [Milestone 11](milestone-11-hub-limits.md)
+**Status:** completed
+**Index:** [WORK_PLAN.md](../planned/WORK_PLAN.md)
+**Depends on:** [Milestone 6](milestone-06-hybrid-transport.md), [Milestone 8](milestone-08-mcp-cli.md), and [Milestone 9](milestone-09-mobile.md)
+**Blocks:** [Milestone 11](../planned/milestone-11-hub-limits.md)
 
 ## Outcome
 
@@ -70,3 +70,13 @@ This is a same-agent review, not an independent review.
 - The guide documents the milestone 6 hub. Milestone 11 updates it if limits change the operator steps.
 - Scope is tests, docs, and defects those tests find.
 - Each claimed property needs a test name or a "not claimed" label.
+
+## Result
+
+The README links the threat model, key management note, self-host guide, and user notes. Those notes describe the prototype that is already in the repo. There is no protocol change and no new table.
+
+`packages/core/src/security.test.ts` characterized existing behavior. The first run was green: a tampered envelope is rejected, a copied database does not yield the message or the private key, a removed member is missing from the next wrap, the hub file lacks the fixture text, a tool post stays `ai`, and a bad invite signature adds no member. No defect turned up, so no product code changed.
+
+`pnpm test` passed (14 files, 68 tests). `pnpm lint` and `pnpm typecheck` passed. Desktop and mobile checks were not repeated because no flow code changed.
+
+Full forward secrecy, screenshot protection, protection after the private key leaves the device, and a third-party audit are not claimed. The self-host guide uses `pnpm hub` and the desktop labels Hub address, Hub port, and Sync hub.

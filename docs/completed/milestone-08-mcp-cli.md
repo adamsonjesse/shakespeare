@@ -3,7 +3,7 @@
 **Status:** completed
 **Index:** [WORK_PLAN.md](../planned/WORK_PLAN.md)
 **Depends on:** [Milestone 4](milestone-04-ai-tagging.md), [Milestone 5](milestone-05-voluntary-files.md), and [Milestone 7](milestone-07-learned-ranking.md)
-**Blocks:** [Milestone 9](milestone-09-mobile.md) and [Milestone 10](../planned/milestone-10-security-docs.md)
+**Blocks:** [Milestone 9](milestone-09-mobile.md) and [Milestone 10](milestone-10-security-docs.md)
 
 ## Outcome
 
