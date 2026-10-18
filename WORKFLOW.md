@@ -270,10 +270,8 @@ milestone the user has asked for.
 
 ### Next milestone
 
-Milestone 11, hub limits, is the next eligible milestone.
-Its plan is [docs/planned/milestone-11-hub-limits.md](docs/planned/milestone-11-hub-limits.md).
-It has not started. The order is in `docs/planned/WORK_PLAN.md`.
-Milestone 11 is optional. Do not start it, or any later milestone, unless the user asks.
+The milestones listed in `docs/planned/WORK_PLAN.md` are complete through Milestone 11.
+Do not start work that is not in that index unless the user asks.
 
 ## Engineering rules
 

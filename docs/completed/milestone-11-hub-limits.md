@@ -1,8 +1,8 @@
 # Milestone 11: Hub limits
 
-**Status:** planned
-**Index:** [WORK_PLAN.md](WORK_PLAN.md)
-**Depends on:** [Milestone 6](../completed/milestone-06-hybrid-transport.md) and [Milestone 10](../completed/milestone-10-security-docs.md)
+**Status:** completed
+**Index:** [WORK_PLAN.md](../planned/WORK_PLAN.md)
+**Depends on:** [Milestone 6](milestone-06-hybrid-transport.md) and [Milestone 10](milestone-10-security-docs.md)
 **Blocks:** none
 
 This milestone is optional. Do not start it while an earlier plan is in `docs/in-progress/`, and do not pull its work forward.
@@ -76,3 +76,13 @@ This is a same-agent review, not an independent review.
 - The admin view is counts and public metadata.
 - SQLite stays unless this milestone's own tests show it cannot do the job.
 - Hub backup excludes client keystores and client databases.
+
+## Result
+
+One hub process hosts two clubs. Catch-up as a member of club B does not return club A's envelope. The local admin view for club B has ids, sizes, and public keys only, and it does not contain club A's envelope, blob hash, or the message fixture. There is no network admin operation.
+
+Example caps, not prices, are 25 members and 10 GB of seeded blobs. `hub_limits` stores them when the club is created. `hub_usage` stores the member count and blob bytes. Before those checks existed, member 26 and a blob past a 4-byte cap were both accepted (`ok: true`). After the change, both are refused with "The hub limit was reached." Existing members can be registered again, and an existing blob can be seeded again. A later process with a higher cap does not loosen the stored cap.
+
+Backup copies `hub.sqlite` and `blobs/` into an empty folder and leaves a planted client file behind. Restore onto an empty directory matches the envelope bytes. A legacy blob table is attached only when the hub has one club. SQLite isolated the clubs and restored the envelopes, so Postgres was not added. The diff has no payment call.
+
+`pnpm test` passed (15 files, 75 tests). `pnpm lint` and `pnpm typecheck` passed. Desktop and mobile checks were not repeated because no client flow changed. The self-host guide documents the optional cap arguments and the backup copy.

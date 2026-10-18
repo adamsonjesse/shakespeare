@@ -22,6 +22,7 @@ const RELAY_MESSAGES = {
   forbidden: "The request is not allowed.",
   unreachable: "The hub is not reachable.",
   hash: "The file hash did not match.",
+  limit: "The hub limit was reached.",
 } as const;
 
 export type RelayErrorCode = keyof typeof RELAY_MESSAGES;
@@ -43,7 +44,7 @@ export type RelayResponse =
 export interface HubDb {
   getCreator(clubId: string): Promise<string | null>;
   listMemberKeys(clubId: string): Promise<readonly string[]>;
-  addMember(clubId: string, publicKey: string, role: "creator" | "member"): Promise<void>;
+  addMember(clubId: string, publicKey: string, role: "creator" | "member"): Promise<"added" | "exists" | "limit">;
   saveEnvelope(input: {
     readonly eventId: string;
     readonly clubId: string;
@@ -51,7 +52,7 @@ export interface HubDb {
     readonly envelope: string;
   }): Promise<void>;
   listEnvelopes(clubId: string): Promise<readonly { readonly eventId: string; readonly envelope: string }[]>;
-  saveBlob(hash: string, bytes: Uint8Array): Promise<void>;
+  saveBlob(clubId: string, hash: string, bytes: Uint8Array): Promise<"saved" | "exists" | "limit">;
   replaceWeights(publicKey: string, weights: readonly AssistWeight[]): Promise<void>;
   listWeights(publicKey: string): Promise<readonly AssistWeight[]>;
 }
@@ -283,7 +284,7 @@ async function createClub(db: HubDb, request: Record<string, unknown>): Promise<
   if (!verifyQuiet(signature, hubCreateMessage(clubId, creatorPublicKey), creatorPublicKey)) return proofResponse();
   const existing = await db.getCreator(clubId);
   if (existing !== null && existing !== creatorPublicKey) return proofResponse();
-  await db.addMember(clubId, creatorPublicKey, "creator");
+  if ((await db.addMember(clubId, creatorPublicKey, "creator")) === "limit") return limitResponse();
   return { ok: true };
 }
 
@@ -303,7 +304,9 @@ async function addMember(db: HubDb, request: Record<string, unknown>): Promise<R
   const creator = await db.getCreator(clubId);
   if (creator === null || creator !== creatorPublicKey) return proofResponse();
   if (!verifyQuiet(signature, hubMemberMessage(clubId, memberPublicKey), creator)) return proofResponse();
-  await db.addMember(clubId, memberPublicKey, memberPublicKey === creator ? "creator" : "member");
+  if ((await db.addMember(clubId, memberPublicKey, memberPublicKey === creator ? "creator" : "member")) === "limit") {
+    return limitResponse();
+  }
   return { ok: true };
 }
 
@@ -398,7 +401,7 @@ async function seedBlob(db: HubDb, request: Record<string, unknown>): Promise<Re
   const bytes = decodeBase64(encoded);
   if (bytes === null || bytes.byteLength === 0 || bytes.byteLength > MAX_BLOB) return forbiddenResponse();
   if (bytesToHex(blake3(bytes)) !== hash) return { ok: false, error: RELAY_MESSAGES.hash };
-  await db.saveBlob(hash, bytes);
+  if ((await db.saveBlob(clubId, hash, bytes)) === "limit") return limitResponse();
   return { ok: true };
 }
 
@@ -446,6 +449,7 @@ function assertOk(
   if (response.error === RELAY_MESSAGES.rejected) throw new RelayError("rejected");
   if (response.error === RELAY_MESSAGES.hash) throw new RelayError("hash");
   if (response.error === RELAY_MESSAGES.unreachable) throw new RelayError("unreachable");
+  if (response.error === RELAY_MESSAGES.limit) throw new RelayError("limit");
   throw new RelayError("forbidden");
 }
 
@@ -461,13 +465,18 @@ function forbiddenResponse(): RelayResponse {
   return { ok: false, error: RELAY_MESSAGES.forbidden };
 }
 
+function limitResponse(): RelayResponse {
+  return { ok: false, error: RELAY_MESSAGES.limit };
+}
+
 function allowedError(error: string): boolean {
   return (
     error === RELAY_MESSAGES.proof ||
     error === RELAY_MESSAGES.rejected ||
     error === RELAY_MESSAGES.forbidden ||
     error === RELAY_MESSAGES.unreachable ||
-    error === RELAY_MESSAGES.hash
+    error === RELAY_MESSAGES.hash ||
+    error === RELAY_MESSAGES.limit
   );
 }
 
